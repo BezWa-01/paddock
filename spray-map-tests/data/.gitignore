@@ -1,0 +1,5 @@
+# The large GIS source files are deliberately NOT committed: they are tens of
+# megabytes each, and this is a public repository. The 20-series suites skip
+# cleanly when they are absent. Drop them in here to run those locally.
+*
+!.gitignore
