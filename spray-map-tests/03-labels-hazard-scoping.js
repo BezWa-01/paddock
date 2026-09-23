@@ -48,6 +48,30 @@ const path = require('path');
   });
   console.log('label overlap check:', JSON.stringify(overlapCheck));
   if (!overlapCheck.found) throw new Error('Expected both a circle label and a name label to be present');
+
+  /* The same property, reached the way Mike actually reaches it. The check
+     above calls renderEditMap() by hand, which re-places BOTH the circles and
+     the names. Clicking a paddock to assign a crop does not: it took the
+     cheap path and redrew only the circle, so the name and hectares stayed
+     where they were placed when the paddock had no circle — directly
+     underneath the new crop letter, unreadable on exactly the paddocks being
+     sprayed. Assign by click alone here, with no manual re-render. */
+  const clickOnlyOverlap = await page.evaluate(async () => {
+    function rectOf(el){ const r=el.getBoundingClientRect(); return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}; }
+    function intersects(a,b){ return a.left<b.right && a.right>b.left && a.top<b.bottom && a.bottom>b.top; }
+    selectedCrop='C';
+    const p=PADDOCKS.find(x=>x.id==='Jindabyne__Home_1');
+    editPolyLayers[p.id].fire('click',{latlng:L.latLng(...p.centerLatLng)});
+    await new Promise(r=>setTimeout(r,600));
+    const circles=[...document.querySelectorAll('.cl-circle')].map(rectOf);
+    const names=[...document.querySelectorAll('.smart-label')].map(rectOf);
+    const collisions=[];
+    circles.forEach((c,ci)=>names.forEach((n,ni)=>{ if(intersects(c,n)) collisions.push([ci,ni]); }));
+    return { circles:circles.length, names:names.length, collisions };
+  });
+  console.log('click-only assignment label check:', JSON.stringify(clickOnlyOverlap));
+  if (clickOnlyOverlap.circles < 2) throw new Error('Expected a crop circle on both treated paddocks, got ' + clickOnlyOverlap.circles);
+  if (clickOnlyOverlap.collisions.length) throw new Error('A paddock name label is sitting under a crop circle after a click-only crop assignment: ' + JSON.stringify(clickOnlyOverlap.collisions));
   if (overlapCheck.overlap) throw new Error('Name label still overlaps the crop circle label');
 
   // --- Test 2: excluded area is a REAL geometric hole in the crop hatch — no
@@ -158,39 +182,57 @@ const path = require('path');
   const hazardMarkersOnMap = await page.$$eval('#editMap .leaflet-marker-icon', els => els.length);
   console.log('marker icons rendered on edit map (Glenyara only):', hazardMarkersOnMap);
 
-  // --- Test 4: "roads" high-contrast basemap replaces the rejected topo options,
-  // reuses the proven OSM tile source, and is the default selected on load ---
+  /* --- Test 4: the default basemap.
+
+     This block used to assert that "roads" drew from tile.openstreetmap.org.
+     That assertion was correct about what the app did and wrong about what it
+     should do: OSM's tile usage policy does not permit this app, and in
+     round 17 OSM started serving its "blocked" tile instead of map data. The
+     assertions below replace it with what the default must now be — an Esri
+     Light Gray Canvas base with the World Transportation roads drawn over it,
+     and no OSM tile request anywhere. Suite 11 covers the host rule itself;
+     this covers the menu, the default, and the contrast filter. --- */
   const roadsCheck = await page.evaluate(() => {
-    const layer = makeTile('roads');
+    const urlsOf = (layer) => layer._url ? [layer._url] : layer.getLayers().map(l => l._url);
     return {
-      url: layer._url,
+      roadsUrls: urlsOf(makeTile('roads')),
+      topoUrls: urlsOf(makeTile('topo')),
       optionExists: !!document.querySelector('#basemapSel option[value="roads"]'),
-      topoOptionGone: !document.querySelector('#basemapSel option[value="topo"]'),
+      topoOptionExists: !!document.querySelector('#basemapSel option[value="topo"]'),
+      osmOptionGone: !document.querySelector('#basemapSel option[value="osm"]'),
       defaultSelected: document.getElementById('basemapSel').value,
       defaultEditTileType: editTileType,
       hasVividClassOnLoad: document.getElementById('editMap').classList.contains('tiles-vivid'),
     };
   });
   console.log('roads basemap check:', JSON.stringify(roadsCheck));
-  if (!roadsCheck.url.includes('tile.openstreetmap.org')) throw new Error('Expected "roads" to reuse the OSM tile source, got: ' + roadsCheck.url);
+  if (roadsCheck.roadsUrls.some(u => /openstreetmap\.org/.test(u))) throw new Error('The default basemap is back on OSM tiles: ' + JSON.stringify(roadsCheck.roadsUrls));
+  if (!roadsCheck.roadsUrls.some(u => u.includes('World_Light_Gray_Base'))) throw new Error('Expected the flat grey canvas as the default base, got: ' + JSON.stringify(roadsCheck.roadsUrls));
+  if (!roadsCheck.roadsUrls.some(u => u.includes('World_Transportation'))) throw new Error('Expected named roads drawn over the canvas, got: ' + JSON.stringify(roadsCheck.roadsUrls));
   if (!roadsCheck.optionExists) throw new Error('Expected a "roads" option in the basemap dropdown');
-  if (!roadsCheck.topoOptionGone) throw new Error('Expected the old "topo" option to be removed');
-  if (roadsCheck.defaultSelected !== 'roads') throw new Error('Expected "roads" to be the default-selected basemap, got: ' + roadsCheck.defaultSelected);
-  if (roadsCheck.defaultEditTileType !== 'roads') throw new Error('Expected editTileType to default to "roads", got: ' + roadsCheck.defaultEditTileType);
-  if (!roadsCheck.hasVividClassOnLoad) throw new Error('Expected the edit map to have the tiles-vivid contrast-boost class applied on initial load');
+  if (!roadsCheck.topoOptionExists) throw new Error('Expected "topo" available as a choice (it is only unsuitable as the DEFAULT, because its hillshade competes with the crop hatch)');
+  if (!roadsCheck.osmOptionGone) throw new Error('The OpenStreetMap option is back in the menu — the app may not use that tile service');
+  /* The DEFAULT moved to 'bw' in round 18. Round 17 shipped the grey canvas
+     as the default; Mike's answer after using it was that the only backdrop
+     he wants is the black-and-white print one, so that is what loads. This
+     assertion tracks his stated choice, not a guess at a nicer default. */
+  if (roadsCheck.defaultSelected !== 'bw') throw new Error('Expected "bw" to be the default-selected basemap, got: ' + roadsCheck.defaultSelected);
+  if (roadsCheck.defaultEditTileType !== 'bw') throw new Error('Expected editTileType to default to "bw", got: ' + roadsCheck.defaultEditTileType);
+  // The grey canvas is already flat and neutral. A saturation boost over it
+  // only muddies the hatch colours, so the filter belongs on topo, not roads.
+  if (roadsCheck.hasVividClassOnLoad) throw new Error('The contrast-boost filter is being applied over the flat canvas basemap');
 
-  // Switch to plain OSM and back, confirm the vivid filter class toggles correctly.
-  await page.selectOption('#basemapSel', 'osm');
+  await page.selectOption('#basemapSel', 'topo');
   await page.waitForTimeout(200);
-  const afterOsm = await page.evaluate(() => document.getElementById('editMap').classList.contains('tiles-vivid'));
-  if (afterOsm) throw new Error('Expected tiles-vivid to be removed when switching to plain OSM');
+  const afterTopo = await page.evaluate(() => document.getElementById('editMap').classList.contains('tiles-vivid'));
+  if (!afterTopo) throw new Error('Expected tiles-vivid on the topo basemap, whose relief-washed colours are weak');
   await page.selectOption('#basemapSel', 'roads');
   await page.waitForTimeout(200);
   const afterRoads = await page.evaluate(() => document.getElementById('editMap').classList.contains('tiles-vivid'));
-  if (!afterRoads) throw new Error('Expected tiles-vivid to be re-applied when switching back to "roads"');
+  if (afterRoads) throw new Error('Expected tiles-vivid to come off again when switching back to "roads"');
   const roadsAttrib = await page.evaluate(() => TILE_ATTRIB['roads']);
   console.log('roads attribution:', roadsAttrib);
-  if (!roadsAttrib.includes('OpenStreetMap')) throw new Error('Expected OSM attribution for the roads basemap');
+  if (!/Esri/.test(roadsAttrib)) throw new Error('Expected Esri attribution for the roads basemap, got: ' + roadsAttrib);
 
   console.log('--- CONSOLE ERRORS ---', JSON.stringify(consoleErrors));
   console.log('--- PAGE ERRORS ---', JSON.stringify(pageErrors));

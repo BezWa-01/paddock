@@ -34,6 +34,15 @@ async function run(engine, name, deviceProfile) {
   await page.goto(appUrl());
   await page.waitForTimeout(1200);
 
+  /* Reading the picked file's bytes is the gate to every importer in the
+     tool, and Blob.arrayBuffer() cannot be assumed: it is absent on Safari
+     before 14, and on Playwright's WebKit build for Windows it throws "The
+     object can not be found here." on a file this same page can read
+     perfectly through FileReader. So the app must not depend on it, and this
+     asserts the fallback exists rather than trusting the engine. */
+  const fileRead = await page.evaluate(() => typeof readFileArrayBuffer);
+  if (fileRead !== 'function') throw new Error('readFileArrayBuffer is missing — the importers are back to bare Blob.arrayBuffer(), which is not available on every Safari');
+
   const globals = await page.evaluate(() => ({
     L: typeof L, shp: typeof shp, JSZip: typeof JSZip,
     polygonClipping: typeof polygonClipping, startApp: typeof startApp,

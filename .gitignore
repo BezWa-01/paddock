@@ -1,0 +1,9 @@
+# Installed by `npm install` in spray-map-tests. Never committed: it is
+# hundreds of MB of dependency tree, and this repo is public.
+node_modules/
+
+# Scratch output from a local test run.
+spray-map-tests/last-run.txt
+
+# Playwright browser binaries, if anyone points the cache in here.
+ms-playwright/

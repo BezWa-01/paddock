@@ -802,10 +802,31 @@ button{cursor:pointer}button:hover{background:#f0f0f0}
 .north-arrow{position:absolute;top:10px;right:10px;z-index:600}
 .north-arrow svg{width:36px;height:50px}
 .tiles-bw .leaflet-tile-pane{filter:grayscale(1) contrast(1.1)}
-.tiles-vivid .leaflet-tile-pane{filter:saturate(1.45) contrast(1.15) brightness(1.02)}
+/* The road overlay sits in its own pane, so the print filter has to reach it
+   there too — otherwise "Black & White" prints coloured highways. */
+.tiles-bw .leaflet-roadoverlay-pane{filter:grayscale(1) brightness(.82) contrast(1.5)}
+.tiles-vivid .leaflet-tile-pane{filter:saturate(1.35) contrast(1.12)}
+/* Esri's transportation overlay draws roads in a very pale cream that is hard
+   to follow on screen and nearly gone on a printed sheet. It lives in its own
+   pane so it can be darkened on its own, leaving the flat canvas underneath
+   untouched — a filter on the whole tile pane would just blow the grey out to
+   white. */
+.leaflet-roadoverlay-pane{filter:brightness(.82) contrast(1.5)}
 
 .smart-label{position:absolute;text-align:center;font-weight:600;line-height:1.25;pointer-events:none;white-space:nowrap;border-radius:2px;padding:1px 4px;z-index:499;font-size:10px;background:rgba(255,255,255,.8)}
 .cl-circle{border-radius:50%;background:#fff;border:2px solid #111;display:flex;align-items:center;justify-content:center;font-weight:800;color:#111;box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+/* One row per loaded power line file. Distribution and HV transmission come
+   as separate statewide exports and are separate hazards to an aerial
+   applicator, so each file keeps its own class, its own show/hide and its own
+   delete rather than being merged into one anonymous pile of segments. */
+.gis-src-list{flex-basis:100%;display:flex;flex-direction:column;gap:3px;margin-top:4px}
+.gis-src{display:flex;align-items:center;gap:8px;font-size:12px;background:#fff;border:1px solid #e0cdb6;border-radius:4px;padding:3px 8px}
+.gis-src .nm{font-weight:700;max-width:330px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gis-src .ct{color:#666}
+.gis-src select{font-size:11px;padding:1px 3px}
+.gis-src .del{cursor:pointer;opacity:.75}
+.gis-src .del:hover{opacity:1}
+.pl-mark-hv{font-size:17px;line-height:1;font-weight:700;color:#000;text-align:center;text-shadow:0 0 3px #fff,0 0 3px #fff}
 .pl-mark{color:#111;font-weight:800;text-align:center;pointer-events:none;font-size:13px;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 2px #fff}
 
 /* Paddock list panel */
@@ -818,6 +839,19 @@ button{cursor:pointer}button:hover{background:#f0f0f0}
 .pl-row{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px 0;font-size:12px}
 .pl-row select{font-size:11px;padding:2px 4px}
 .pl-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Map text sits ON the ground it labels, so it gets a halo rather than a box.
+   Boxes were the round-17 complaint: a dozen white-on-blue chips stacked over
+   each other on one road, hiding the paddock underneath. A halo keeps the
+   word readable over hatch, imagery or grey canvas without blanking out what
+   it covers, which is how every printed map handles it. */
+.map-halo{white-space:nowrap;font-weight:700;pointer-events:none;
+  text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff,0 0 4px #fff,1px 1px 2px #fff}
+.road-label{font-size:10.5px;color:#7a4a00}
+/* With no backdrop, Leaflet's own grey container colour is what would print.
+   The point of the option is white paper, so say so. */
+.tiles-blank,.tiles-blank .leaflet-container{background:#fff!important}
+.xroad-label{font-size:9.5px;color:#00407a}
+.airstrip-label{font-size:10.5px;color:#7b2d8e}
 
 @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   body{background:#fff!important;margin:0!important;padding:0!important}
@@ -825,7 +859,10 @@ button{cursor:pointer}button:hover{background:#f0f0f0}
   .preview-wrap{padding:0!important;overflow:visible!important}
   .page{margin:0!important;box-shadow:none!important;width:100%!important;height:100%!important}
   .leaflet-control-zoom{display:none!important}
-  .leaflet-control-attribution{display:none!important}
+  /* Esri's terms require the tile credit to stay on the map, so it prints —
+     just small enough to stay out of the way of the spray plan. */
+  .leaflet-control-attribution{display:block!important;background:rgba(255,255,255,.75)!important;font-size:6px!important;line-height:8px!important;padding:0 3px!important;color:#555!important}
+  .leaflet-control-attribution a{color:#555!important;text-decoration:none!important}
   .leaflet-control-scale-line{background:rgba(255,255,255,.9)!important;border-color:#333!important;font-size:9px!important}
   /* Belt and braces for the printed excluded area: these helper shapes span
      the whole paddock and must never paint, whatever the print pipeline does
@@ -886,12 +923,26 @@ button{cursor:pointer}button:hover{background:#f0f0f0}
     <div class="sep"></div>
     <label>Map:</label>
     <select id="basemapSel">
-      <option value="roads" selected>Roads &amp; streams (high contrast)</option>
-      <option value="osm">OpenStreetMap (standard)</option>
-      <option value="sat">Satellite (Esri)</option>
-      <option value="hybrid">Satellite + labels (Hybrid)</option>
-      <option value="bw">OSM Black &amp; White (print)</option>
+      <optgroup label="OSM cartography — needs a free key">
+        <option value="tf_landscape">Landscape (Thunderforest)</option>
+        <option value="tf_outdoors">Outdoors (Thunderforest)</option>
+        <option value="mt_streets">Streets (MapTiler)</option>
+        <option value="stadia_bright">OSM Bright (Stadia)</option>
+        <option value="geoapify_bright">OSM Bright (Geoapify)</option>
+      </optgroup>
+      <optgroup label="No key needed">
+        <option value="bw" selected>Black &amp; White (print)</option>
+        <option value="blank">Plain white — no backdrop</option>
+        <option value="roads">Roads &amp; place names (clean)</option>
+        <option value="topo">Topographic (terrain &amp; drainage)</option>
+        <option value="sat">Satellite (Esri)</option>
+        <option value="hybrid">Satellite + labels (Hybrid)</option>
+        <option value="custom">Custom tile URL&hellip;</option>
+      </optgroup>
     </select>
+    <input type="text" id="tileKeyInput" placeholder="paste your free API key" title="Your key for the selected provider. Stored on this device only, never sent anywhere except that provider." style="width:190px;display:none">
+    <a id="tileKeyHelp" href="#" target="_blank" rel="noopener" title="Where to get a free key" style="display:none;font-size:11px;color:#9ad">get a key</a>
+    <input type="text" id="customTileUrl" placeholder="https://&hellip;/{z}/{x}/{y}.png" title="Paste an XYZ tile URL from your own map provider. Kept on this device only." style="width:230px;display:none">
     <div class="sep"></div>
     <label>Title:</label><input type="text" id="titleInput" value="Aerial Spraying Plan Map 2026" style="width:210px">
     <div class="sep"></div>
@@ -952,12 +1003,13 @@ button{cursor:pointer}button:hover{background:#f0f0f0}
     <div id="gisPanel" class="hidden">
   <div class="gis-bar" id="gisBar">
     <span class="lbl">Power line data (GIS import):</span>
-    <button class="btn-job" id="loadPowerlineBtn" style="background:#e67e22;border-color:#e67e22">⚡ Load power lines (.shp/.zip)</button>
-    <input type="file" id="powerlineInput" accept=".shp,.zip" style="display:none">
+    <button class="btn-job" id="loadPowerlineBtn" style="background:#e67e22;border-color:#e67e22">⚡ Add power line file(s) (.shp/.zip)</button>
+    <input type="file" id="powerlineInput" accept=".shp,.zip" multiple style="display:none">
     <label>Buffer:</label><input type="number" id="plBuffer" value="2" min="0.5" max="20" step="0.5" style="width:56px"> km
     <label class="toolbar-check" style="background:#eee"><input type="checkbox" id="showGisPlChk" checked> Show</label>
-    <button class="btn-job" id="clearPowerlineBtn" style="background:#c0392b;border-color:#c0392b">🗑 Clear</button>
+    <button class="btn-job" id="clearPowerlineBtn" style="background:#c0392b;border-color:#c0392b">🗑 Clear all</button>
     <span id="gisPlStatus" class="hazard-hint"></span>
+    <div id="plSourceList" class="gis-src-list"></div>
   </div>
 
   <div class="gis-bar" id="poleBar">
@@ -1477,7 +1529,7 @@ async function loadFile(file){
   }
   statusEl.textContent='Parsing shapefiles...';
   try{
-    const buf=await file.arrayBuffer();
+    const buf=await readFileArrayBuffer(file);
     const paddocks=await parseShapefileZip(buf);
     if(!paddocks.length){
       statusEl.innerHTML='<span class="error">No valid paddock polygons found in zip</span>';
@@ -1550,7 +1602,7 @@ addFarmInput.onchange=async(e)=>{
   addFarmInput.value='';
   if(!file.name.toLowerCase().endsWith('.zip')){ alert('Please choose a .zip file containing shapefiles.'); return; }
   try{
-    const buf=await file.arrayBuffer();
+    const buf=await readFileArrayBuffer(file);
     const newPaddocks=await parseShapefileZip(buf);
     if(!newPaddocks.length){ alert('No valid paddock polygons found in that zip.'); return; }
     const before=new Set(FARMS);
@@ -1572,27 +1624,35 @@ addFarmInput.onchange=async(e)=>{
 
 /* ================= MAP SETUP ================= */
 const TILE_ATTRIB={
-  osm:'© OpenStreetMap contributors',
-  bw:'© OpenStreetMap contributors',
-  roads:'© OpenStreetMap contributors',
+  roads:'© Esri, HERE, Garmin, © OpenStreetMap contributors',
+  bw:'© Esri, HERE, Garmin, © OpenStreetMap contributors',
+  topo:'© Esri, HERE, Garmin, © OpenStreetMap contributors',
   sat:'Imagery © Esri, Maxar, Earthstar Geographics',
   hybrid:'Imagery © Esri, Maxar, Earthstar Geographics',
+  blank:'',
+  custom:'Custom tile source',
+  tf_landscape:'Maps © Thunderforest, Data © OpenStreetMap contributors',
+  tf_outdoors:'Maps © Thunderforest, Data © OpenStreetMap contributors',
+  mt_streets:'© MapTiler © OpenStreetMap contributors',
+  stadia_bright:'© Stadia Maps © OpenStreetMap contributors',
+  geoapify_bright:'Powered by Geoapify © OpenStreetMap contributors',
 };
-// Basemap history: OpenTopoMap had the road/stream contrast Mike wanted but
-// its elevation contour overlay cluttered against the checked-paddock hatch.
-// Esri's World_Topo_Map (tried next) turned out to have the same problem —
-// its background is a continuous soft relief/hillshade texture, not clean
-// contour lines, but it reads the same way: distracting under the hatch.
-// CartoDB Voyager (the obvious high-contrast no-topo option) now requires an
-// API key — confirmed by actually rendering a tile, which came back stamped
-// "API KEY REQUIRED" instead of map data, not just checking the HTTP status.
-// What's actually being asked for — bold roads, clear blue water, green
-// vegetation, zero elevation clutter — is exactly standard OpenStreetMap's
-// own styling (OpenTopoMap is this same OSM data plus the contour layer on
-// top), so "roads" reuses the proven OSM tile source and adds a CSS
-// saturation/contrast boost on top to make that road/water colour work pop
-// harder, instead of introducing another external service that might turn
-// out to need a key or clutter the view the same way.
+// Basemap history, in the order each option was tried and why it went:
+//  - OpenTopoMap: the road/stream contrast wanted, but its contour overlay
+//    clutters against the checked-paddock hatch. Its z18 tiles also come back
+//    black now.
+//  - Esri World_Topo_Map: same problem in a different form — a continuous
+//    soft hillshade wash rather than contour lines, but it reads the same way
+//    under the hatch. Kept as an option, not the default.
+//  - CartoDB Voyager/Positron: now require an API key. Confirmed by actually
+//    rendering a tile, which came back stamped "API KEY REQUIRED" instead of
+//    map data, not by checking the HTTP status (it still returns 200).
+//  - Raw OpenStreetMap tiles: used as the default through round 16 and the
+//    reason this basemap broke. See the tile-source block below.
+//  - Esri Light Gray Canvas + World Transportation (current default): flat,
+//    unfiltered grey with clean named roads drawn over it. Nothing in the
+//    backdrop competes with the hatch, the excluded-area outline or the
+//    hazard markers, and it prints without a wash of relief behind the plan.
 /* Basemap tiles are the one thing in this tool that genuinely needs the
    internet. When they don't arrive — no signal in the paddock, a blocked
    network, or a hosted copy whose sandbox won't allow the tile host — the map
@@ -1621,28 +1681,143 @@ function watchTiles(layer){
   if(layer.eachLayer) layer.eachLayer(l=>{ if(l.on) l.on('tileerror',noteTileFailure); });
   return layer;
 }
-function makeTile(t){ return watchTiles(makeTileInner(t)); }
-function makeTileInner(t){
-  // maxNativeZoom caps the actual tile fetch level — rural WA imagery in this
-  // Esri layer usually tops out well before 19, so without this Leaflet keeps
-  // requesting (and retrying) tiles the server doesn't have at high zoom;
-  // maxZoom above it just lets Leaflet upscale the last real tile instead.
-  if(t==='sat') return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17});
-  if(t==='hybrid') return L.layerGroup([
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17}),
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17}),
-  ]);
-  return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}); // 'osm', 'bw' (greyscale) and 'roads' (saturation/contrast boost) all share this same tile source, styled apart purely by CSS filter class
+/* ---- Tile sources -------------------------------------------------------
+   Rounds 1-16 drew the road basemap straight from tile.openstreetmap.org.
+   That breaks the OpenStreetMap Foundation tile usage policy
+   (https://operations.osmfoundation.org/policies/tiles/): those tiles are a
+   volunteer-funded service for OSM's own site and small-scale use, a web app
+   must send a valid Referer — which a file:// copy cannot send at all — and
+   the policy explicitly points apps like this one at a different provider.
+   OSM began serving their "blocked" tile instead of map data, which is what
+   Mike saw. Every basemap now comes from Esri's public ArcGIS Online
+   basemap services, which the satellite layers already used without trouble.
+
+   The default is Light Gray Canvas + World Transportation rather than a
+   street or topo map. Round 5 rejected Esri topo because its continuous
+   hillshade relief reads as noise underneath the crop hatch — re-tested here
+   and still true, and Esri's street map has the same relief in beige. The
+   grey canvas is flat, so the hatch, the excluded-area outline and the
+   hazard markers are the only texture on the page; the transportation
+   overlay puts named roads back on top as clean lines. It also prints far
+   better than either. The detail the canvas leaves out is detail Mike
+   already loads as authoritative vectors: the WA road network and the
+   Western Power pole layer.
+
+   maxNativeZoom caps the actual fetch level. Past its last cached level the
+   Esri server hands back a grey "map data not yet available" tile rather
+   than a 404 — worse than a blur, because it looks like real ground.
+   Measured over Koojan: the grey canvas is cached to 16, imagery to 18,
+   topo and street to 17, the transparent reference overlays to 19. Above
+   maxNativeZoom Leaflet upscales the last real tile instead. */
+var roadLayerLoaded=false;   // var, not let: makeTile() runs before roadFeatures is initialised
+const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
+const ESRI_ATTR='Tiles &copy; <a href="https://www.esri.com/">Esri</a> — Esri, HERE, Garmin, USGS, NGA, &copy; OpenStreetMap contributors';
+const ESRI_IMG_ATTR='Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics';
+const LAYER={
+  canvas:      {u:'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',      mnz:16},
+  canvasRef:   {u:'Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', mnz:19},
+  transport:   {u:'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',    mnz:19},
+  places:      {u:'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', mnz:19},
+  topo:        {u:'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',                    mnz:17},
+  imagery:     {u:'World_Imagery/MapServer/tile/{z}/{y}/{x}',                     mnz:18},
+};
+const TILE_SOURCES={
+  roads:  {layers:['canvas','transport'],            attribution:ESRI_ATTR},
+  bw:     {layers:['canvas','transport'],            attribution:ESRI_ATTR},
+  topo:   {layers:['topo'],                          attribution:ESRI_ATTR},
+  sat:    {layers:['imagery'],                       attribution:ESRI_IMG_ATTR},
+  hybrid: {layers:['imagery','transport','places'],  attribution:ESRI_IMG_ATTR},
+};
+const DARKEN_PANE={transport:true,canvasRef:true};
+function esriLayer(key,attribution,map){
+  const d=LAYER[key];
+  const opts={maxZoom:19,maxNativeZoom:d.mnz,attribution:attribution||''};
+  if(map&&DARKEN_PANE[key]){
+    if(!map.getPane('roadoverlay')){ map.createPane('roadoverlay'); map.getPane('roadoverlay').style.zIndex=250; }
+    opts.pane='roadoverlay';
+  }
+  return L.tileLayer(ESRI+d.u,opts);
+}
+/* OSM's own cartography — amber roads, blue water, route shields — is what
+   Mike actually wants behind a spray plan, and round 17 established we cannot
+   take it from OSM's own servers. Three no-key routes to that look were
+   tested and all three failed: Esri's NatGeo and DeLorme services return no
+   data over Koojan, Carto is key-gated, and terrestris' free OSM WMS renders
+   beautifully to z15 but stamps an advertisement across roughly two tiles in
+   nine from z16 up — which is where a paddock-scale spray plan lives. So the
+   look is available, but only from a provider that wants to know who you are.
+   All five below have a free tier with no card; the key is stored on this
+   device and goes nowhere but that provider. */
+const KEYED_PROVIDERS={
+  tf_landscape:   {label:'Landscape (Thunderforest)', url:'https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey={key}', signup:'https://manage.thunderforest.com/dashboard', attribution:'Maps &copy; <a href="https://www.thunderforest.com/">Thunderforest</a>, Data &copy; OpenStreetMap contributors', maxZoom:22},
+  tf_outdoors:    {label:'Outdoors (Thunderforest)',  url:'https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey={key}',  signup:'https://manage.thunderforest.com/dashboard', attribution:'Maps &copy; <a href="https://www.thunderforest.com/">Thunderforest</a>, Data &copy; OpenStreetMap contributors', maxZoom:22},
+  mt_streets:     {label:'Streets (MapTiler)',        url:'https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key={key}', signup:'https://cloud.maptiler.com/account/keys/', attribution:'&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; OpenStreetMap contributors', maxZoom:20},
+  stadia_bright:  {label:'OSM Bright (Stadia)',       url:'https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}.png?api_key={key}', signup:'https://client.stadiamaps.com/dashboard/', attribution:'&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; OpenStreetMap contributors', maxZoom:20},
+  geoapify_bright:{label:'OSM Bright (Geoapify)',     url:'https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey={key}', signup:'https://myprojects.geoapify.com/', attribution:'Powered by <a href="https://www.geoapify.com/">Geoapify</a> &copy; OpenStreetMap contributors', maxZoom:20},
+};
+function tileKeyFor(provider){
+  try{ return (localStorage.getItem('spraymap_key_'+provider)||'').trim(); }catch(e){ return ''; }
+}
+function setTileKeyFor(provider,key){
+  try{ localStorage.setItem('spraymap_key_'+provider,(key||'').trim()); }catch(e){}
+}
+function customTileUrl(){
+  try{ return (localStorage.getItem('spraymap_custom_tile_url')||'').trim(); }catch(e){ return ''; }
+}
+function setCustomTileUrl(u){
+  try{ localStorage.setItem('spraymap_custom_tile_url',(u||'').trim()); }catch(e){}
+}
+function makeTile(t,map){ return watchTiles(makeTileInner(t,map)); }
+function makeTileInner(t,map){
+  /* No backdrop at all. Esri's light-grey canvas still carries a handful of
+     its own faint road names, which cannot be moved or switched off, and on a
+     sheet where Mike's authoritative roads, poles and power lines are all
+     drawn as vectors there is nothing left for a basemap to contribute. White
+     paper prints cleanest, needs no network, and leaves the hatch and the
+     hazard markers as the only marks on the page. */
+  if(t==='blank') return L.layerGroup([]);
+  const kp=KEYED_PROVIDERS[t];
+  if(kp){
+    const key=tileKeyFor(t);
+    // No key means no tiles, deliberately: quietly substituting a different
+    // basemap would leave the operator reading ground he did not choose.
+    if(!key) return L.layerGroup([]);
+    return L.tileLayer(kp.url.replace('{key}',encodeURIComponent(key)),
+      {maxZoom:19,maxNativeZoom:Math.min(19,kp.maxZoom),attribution:kp.attribution});
+  }
+  if(t==='custom'){
+    const u=customTileUrl();
+    // An empty or malformed custom URL must not quietly fall back to a
+    // different map: the operator would be looking at ground he did not pick.
+    if(!/\{z\}/.test(u)||!/\{x\}/.test(u)||!/\{y\}/.test(u)) return L.layerGroup([]);
+    return L.tileLayer(u,{maxZoom:19,attribution:'Custom tile source'});
+  }
+  const src=TILE_SOURCES[t]||TILE_SOURCES.roads;
+  // Esri's transportation overlay draws its own road names, along the road,
+  // rotated — which on a vertical road reads as a column of tick marks and
+  // which nothing in this tool can move. Once Mike's own Main Roads WA layer
+  // is loaded, those raster names are both redundant and unmovable clutter
+  // sitting under labels this tool CAN place properly, so the overlay comes
+  // off and his authoritative vectors carry the roads instead.
+  const layers=src.layers.filter(k=>!(k==='transport'&&roadLayerLoaded));
+  if(layers.length===1) return esriLayer(layers[0],src.attribution,map);
+  // Only the first layer carries the credit, so the attribution line is not
+  // printed three times over.
+  return L.layerGroup(layers.map((k,i)=>esriLayer(k,i===0?src.attribution:'',map)));
 }
 function applyTileFilterClass(el,tileType){
+  // The default canvas basemap is already flat and neutral, so it gets no
+  // filter — a saturation boost only muddies the hatch colours over it.
+  // 'topo' keeps the boost, because its relief-washed colours are weak.
   el.classList.toggle('tiles-bw',tileType==='bw');
-  el.classList.toggle('tiles-vivid',tileType==='roads');
+  el.classList.toggle('tiles-vivid',tileType==='topo');
+  el.classList.toggle('tiles-blank',tileType==='blank');
 }
-let editTileType='roads';
-const editMap=L.map('editMap',{zoomControl:true,attributionControl:false});
-let editTile=makeTile('roads');
+let editTileType='bw';
+const editMap=L.map('editMap',{zoomControl:true,attributionControl:true});
+let editTile=makeTile('bw',editMap);
 editTile.addTo(editMap);
-applyTileFilterClass(document.getElementById('editMap'),'roads');
+applyTileFilterClass(document.getElementById('editMap'),'bw');
 let editPolyLayers={};
 let editNameGroup=L.layerGroup().addTo(editMap);
 let editCircleGroup=L.layerGroup().addTo(editMap);
@@ -1650,16 +1825,75 @@ let hazardGroup=L.layerGroup().addTo(editMap);
 let gisPowerlineGroup=L.layerGroup().addTo(editMap);
 let poleGroup=L.layerGroup().addTo(editMap);
 let roadGroup=L.layerGroup().addTo(editMap);
+let roadLabelGroup=L.layerGroup().addTo(editMap);
 let exclusionGroup=L.layerGroup().addTo(editMap);
 let lineDraftLayer=null;
 
-document.getElementById('basemapSel').onchange=function(){
+/* The basemap composition depends on whether Mike's road layer is loaded, so
+   it has to be rebuilt when that changes — not only when he picks a map. */
+function syncBasemapToRoadLayer(){
+  const now=(typeof roadFeatures!=='undefined'&&roadFeatures.length>0);
+  if(now===roadLayerLoaded) return;
+  roadLayerLoaded=now;
+  applyBasemapChoice(editTileType);
+  if(previewMap) refreshPV();
+}
+function applyBasemapChoice(v){
   editMap.removeLayer(editTile);
-  applyTileFilterClass(document.getElementById('editMap'),this.value);
-  editTileType=this.value;
-  editTile=makeTile(this.value);
+  applyTileFilterClass(document.getElementById('editMap'),v);
+  editTileType=v;
+  editTile=makeTile(v,editMap);
   editTile.addTo(editMap);
+  const kp=KEYED_PROVIDERS[v];
+  const keyEl=document.getElementById('tileKeyInput');
+  const helpEl=document.getElementById('tileKeyHelp');
+  const urlEl=document.getElementById('customTileUrl');
+  urlEl.style.display = (v==='custom') ? '' : 'none';
+  keyEl.style.display = kp ? '' : 'none';
+  helpEl.style.display = kp ? '' : 'none';
+  if(kp){
+    keyEl.value=tileKeyFor(v);
+    keyEl.placeholder=tileKeyFor(v)?'':'paste your free '+kp.label.replace(/^.*\(|\)$/g,'')+' key';
+    helpEl.href=kp.signup;
+    if(!tileKeyFor(v)) setBasemapNotice(kp);
+    else clearBasemapNotice();
+  }else{
+    clearBasemapNotice();
+  }
+  try{ localStorage.setItem('spraymap_basemap',v); }catch(e){}
+}
+/* An unkeyed provider renders nothing, so say why on the map instead of
+   leaving a blank page that looks like a broken tool. */
+function setBasemapNotice(kp){
+  const bar=document.getElementById('tileWarningBar');
+  if(!bar)return;
+  bar.innerHTML='\ud83d\udddd <b>'+kp.label+' needs a free API key.</b> Sign up at <a href="'+kp.signup+'" target="_blank" rel="noopener" style="color:#9ad">'+kp.signup.replace(/^https:\/\//,'').split('/')[0]+'</a> (no card), paste the key in the box next to the map selector, and this backdrop will draw. '+
+    'Every other part of the tool works without it. (Tap to dismiss.)';
+  bar.style.display='block';
+  bar.onclick=()=>{ bar.style.display='none'; };
+}
+function clearBasemapNotice(){
+  const bar=document.getElementById('tileWarningBar');
+  if(bar&&/needs a free API key/.test(bar.innerHTML||'')){ bar.style.display='none'; bar.innerHTML=''; }
+}
+document.getElementById('basemapSel').onchange=function(){ applyBasemapChoice(this.value); };
+document.getElementById('customTileUrl').value=customTileUrl();
+document.getElementById('customTileUrl').onchange=function(){
+  setCustomTileUrl(this.value);
+  if(editTileType==='custom') applyBasemapChoice('custom');
 };
+document.getElementById('tileKeyInput').onchange=function(){
+  if(!KEYED_PROVIDERS[editTileType])return;
+  setTileKeyFor(editTileType,this.value);
+  applyBasemapChoice(editTileType);
+};
+(function restoreBasemapChoice(){
+  let v=null;
+  try{ v=localStorage.getItem('spraymap_basemap'); }catch(e){}
+  if(!v||!(KEYED_PROVIDERS[v]||/^(roads|topo|sat|hybrid|bw|blank|custom)$/.test(v))) return;
+  document.getElementById('basemapSel').value=v;
+  applyBasemapChoice(v);
+})();
 
 function buildFarmChecks(){
   const fc=document.getElementById('farmChecks');
@@ -1813,6 +2047,32 @@ function buildHazardBar(){
 }
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* Read an uploaded File as an ArrayBuffer, the long way round when it has to
+   be. Every importer in this tool starts with the bytes of a file the user
+   picked, so this one call is the gate to boundaries, power lines, poles and
+   roads alike — and Blob.arrayBuffer(), the obvious modern way to do it, is
+   not universally there. It is missing on Safari before 14, and it throws
+   outright on at least one shipping WebKit build ("The object can not be
+   found here.") while FileReader on the same file works perfectly. A failure
+   here reads to the user as "the file won't load" with nothing to act on, so
+   it falls back rather than surfacing. */
+function readFileArrayBuffer(file){
+  return new Promise((resolve,reject)=>{
+    const viaReader=()=>{
+      try{
+        const fr=new FileReader();
+        fr.onload=()=>resolve(fr.result);
+        fr.onerror=()=>reject(fr.error||new Error('Could not read '+(file&&file.name?file.name:'that file')));
+        fr.readAsArrayBuffer(file);
+      }catch(err){ reject(err); }
+    };
+    if(!file||typeof file.arrayBuffer!=='function') return viaReader();
+    let p;
+    try{ p=file.arrayBuffer(); }catch(err){ return viaReader(); }
+    Promise.resolve(p).then(resolve,viaReader);
+  });
+}
 function saveState(){ try{ localStorage.setItem(STORE_STATE,JSON.stringify(state)); }catch(e){} }
 
 /* ================= PADDOCK STYLE / RENDER ================= */
@@ -1910,6 +2170,100 @@ function addPolygons(targetMap,polyLayers,interactive){
 // the ones that must print correctly, so name labels treat their placements
 // as fixed obstacles to dodge rather than the two systems fighting blind.
 let lastCirclePlacements=[];
+/* ---- Shared screen-space label placement --------------------------------
+   Everything that writes on the map competes for the same pixels: crop
+   letters, paddock names and hectares, hazard icons, airstrip notes and road
+   names. Each system used to place its own labels blind to the others, and
+   road names were placed per shapefile FEATURE — Main Roads WA splits one
+   road into many features, so "Bindoon Moora Rd" was drawn six times in a
+   row, overlapping itself, on top of whatever was underneath.
+
+   Now one pass places them in priority order into a single occupancy list:
+   crop letters first (they must stay on treated ground and they are the
+   instruction the job turns on), then paddock names, then road and crossroad
+   names, each dodging everything already claimed. Anything that cannot find
+   clear space is dropped rather than stacked — a missing road name is a
+   smaller problem than an unreadable map. */
+let labelOccupancy=[];
+let hazardLabelBoxes=[];
+function labelPassBegin(){ labelOccupancy=[]; }
+function labelReserve(x,y,w,h){ labelOccupancy.push({x:x,y:y,w:w,h:h}); }
+function labelCollides(x,y,w,h,pad){
+  const p=(pad==null?3:pad);
+  for(let i=0;i<labelOccupancy.length;i++){
+    const b=labelOccupancy[i];
+    if(Math.abs(x-b.x)<(w+b.w)/2+p && Math.abs(y-b.y)<(h+b.h)/2+p) return true;
+  }
+  return false;
+}
+/* Treated paddocks are the one part of the map a label must not sit on if it
+   can be helped — that hatch is the spray instruction. Computed once per pass
+   because the boolean clip is not free. */
+let treatedRingsCache=null;
+function treatedRingsForPass(){
+  if(treatedRingsCache) return treatedRingsCache;
+  treatedRingsCache=[];
+  visiblePaddocks().forEach(p=>{
+    if(!state.treatment[p.id]) return;
+    try{
+      const {treated}=computeTreatedGeometry(p);
+      (treated||[]).forEach(rings=>treatedRingsCache.push(rings));
+    }catch(e){}
+  });
+  return treatedRingsCache;
+}
+function overTreatedGround(targetMap,x,y){
+  const ll=targetMap.containerPointToLatLng(L.point(x,y));
+  const rings=treatedRingsForPass();
+  for(let i=0;i<rings.length;i++){
+    if(pointInsideTreatedPolygon(ll.lng,ll.lat,rings[i])) return true;
+  }
+  return false;
+}
+/* Walk an on-screen polyline and return an anchor every `gap` pixels, with
+   the local direction, so a long road gets a few labels along its length and
+   a short one gets a single label. */
+function walkScreenLine(pts,gap,firstAt){
+  const out=[]; let next=(firstAt==null?gap*0.5:firstAt), acc=0;
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1], b=pts[i];
+    const len=Math.hypot(b.x-a.x,b.y-a.y);
+    if(len<1e-6) continue;
+    while(next<=acc+len){
+      const f=(next-acc)/len;
+      out.push({x:a.x+(b.x-a.x)*f, y:a.y+(b.y-a.y)*f, dx:(b.x-a.x)/len, dy:(b.y-a.y)/len});
+      next+=gap;
+    }
+    acc+=len;
+  }
+  return out;
+}
+function textBox(text,fontPx){ return {w:String(text).length*fontPx*0.56+6, h:fontPx*1.35+4}; }
+/* Try an anchor, then perpendicular offsets either side of the line, and
+   return the first clear spot — preferring one that is not over crop hatch.
+   Returns null when every candidate is taken. */
+function placeAlongLine(targetMap,anchor,box,opts){
+  const o=opts||{};
+  const size=targetMap.getSize();
+  const nx=-anchor.dy, ny=anchor.dx;
+  const offs=o.offsets||[13,-13,22,-22,32,-32,44,-44,0];
+  let fallback=null;
+  for(const d of offs){
+    const x=anchor.x+nx*d, y=anchor.y+ny*d;
+    if(x-box.w/2<4||y-box.h/2<4||x+box.w/2>size.x-4||y+box.h/2>size.y-4) continue;
+    if(labelCollides(x,y,box.w,box.h)) continue;
+    if(o.avoidTreated && overTreatedGround(targetMap,x,y)){ if(!fallback) fallback={x:x,y:y}; continue; }
+    return {x:x,y:y};
+  }
+  return o.allowOverTreated===false?null:fallback;
+}
+function haloMarker(targetMap,x,y,cls,text,box){
+  const ll=targetMap.containerPointToLatLng(L.point(x,y));
+  const icon=L.divIcon({className:'',html:'<div class="map-halo '+cls+'" style="text-align:center">'+esc(text)+'</div>',
+    iconSize:[box.w,box.h], iconAnchor:[box.w/2,box.h/2]});
+  return L.marker(ll,{icon:icon,interactive:false,pane:'tooltipPane'});
+}
+
 function smartLabels(targetMap,polyLayers,labelGroup,fontSize){
   labelGroup.clearLayers();
   const vis=PADDOCKS.filter(p=>checkedFarms.has(p.farm));
@@ -1923,7 +2277,12 @@ function smartLabels(targetMap,polyLayers,labelGroup,fontSize){
     const lw=textLen*fontSize*0.52+8, lh=fontSize*2.2+4;
     labels.push({name:p.name,area:p.area_ha,origLat:center.lat,origLng:center.lng,px:pxC.x,py:pxC.y,lw,lh});
   });
-  const placed=[...lastCirclePlacements];
+  // Seed from whatever the pass has already claimed (crop letters, hazard
+  // icons, airstrip notes); fall back to the circle placements alone when
+  // called outside a pass.
+  const placed=labelOccupancy.length
+    ? labelOccupancy.map(b=>({px:b.x,py:b.y,lw:b.w,lh:b.h}))
+    : [...lastCirclePlacements];
   labels.forEach(l=>{
     function overlaps(x,y){ for(const p of placed){ if(Math.abs(x-p.px)<(l.lw+p.lw)/2+2&&Math.abs(y-p.py)<(l.lh+p.lh)/2+2) return true; } return false; }
     if(!overlaps(l.px,l.py)){ placed.push(l); return; }
@@ -1937,6 +2296,7 @@ function smartLabels(targetMap,polyLayers,labelGroup,fontSize){
     const pos=targetMap.containerPointToLatLng(L.point(l.px,l.py));
     const icon=L.divIcon({className:'smart-label',html:'<b>'+esc(l.name)+'</b><br>'+l.area+' Ha',iconSize:[l.lw,l.lh],iconAnchor:[l.lw/2,l.lh/2]});
     labelGroup.addLayer(L.marker(pos,{icon,interactive:false,pane:'tooltipPane'}));
+    labelReserve(l.px,l.py,l.lw,l.lh);
   });
 }
 
@@ -1987,6 +2347,10 @@ function smartCircleLabels(targetMap,polyLayers,labelGroup,diameter){
     if(Math.sqrt((l.px-origPx.x)**2+(l.py-origPx.y)**2)>15){
       labelGroup.addLayer(L.polyline([[l.origLat,l.origLng],pos],{color:'#555',weight:1,dashArray:'3,3',opacity:0.6}));
     }
+    // Crop letters claim their space first: they are the instruction the job
+    // turns on, and they must stay on treated ground, so nothing else may
+    // push them.
+    labelReserve(l.px,l.py,l.lw,l.lh);
   });
 }
 
@@ -2031,6 +2395,10 @@ window.__deleteLine=function(id){
 
 function renderHazardsAndLines(targetMap,group,size){
   group.clearLayers();
+  // Recorded so the label pass can keep paddock names and road names off the
+  // hazard icons and the airstrip note, rather than each discovering the
+  // others too late.
+  hazardLabelBoxes=[];
   visibleHazardsList().forEach(h=>{
     const icon=L.divIcon({className:'',html:hazardIconSvg(h.type,size),iconSize:[size,size],iconAnchor:[size/2,size/2]});
     const m=L.marker([h.lat,h.lng],{icon,draggable:true});
@@ -2045,6 +2413,10 @@ function renderHazardsAndLines(targetMap,group,size){
       const ll=m.getLatLng(); h.lat=ll.lat; h.lng=ll.lng; saveState();
     });
     group.addLayer(m);
+    try{
+      const hp=targetMap.latLngToContainerPoint(L.latLng(h.lat,h.lng));
+      hazardLabelBoxes.push({x:hp.x,y:hp.y,w:size,h:size});
+    }catch(e){}
   });
   visibleLinesList().forEach(ln=>{
     const latlngs=ln.points.map(p=>[p[0],p[1]]);
@@ -2071,9 +2443,16 @@ function renderHazardsAndLines(targetMap,group,size){
         const arrowIcon=L.divIcon({className:'',html:'<div style="transform:rotate('+angle+'deg);font-size:20px;line-height:1;color:#8e44ad">➤</div>',iconSize:[20,20],iconAnchor:[10,10]});
         group.addLayer(L.marker(latlngs[n-1],{icon:arrowIcon,interactive:false}));
         if(ln.meta&&ln.meta.label){
+          // Offset clear of the strip itself and drawn as halo text, not a
+          // bordered chip that blanks out the ground it covers.
           const mid=latlngs[Math.floor((n-1)/2)];
-          const lblIcon=L.divIcon({className:'',html:'<div style="background:#fff;border:1px solid #8e44ad;color:#8e44ad;font-weight:700;font-size:11px;padding:1px 5px;border-radius:3px;white-space:nowrap">'+esc(ln.meta.label)+'</div>',iconSize:[0,0]});
-          group.addLayer(L.marker(mid,{icon:lblIcon,interactive:false}));
+          const mp=targetMap.latLngToContainerPoint(L.latLng(mid[0],mid[1]));
+          const box=textBox(ln.meta.label,10.5);
+          const nx=-(p2.y-p1.y), ny=(p2.x-p1.x);
+          const nl=Math.hypot(nx,ny)||1;
+          const lx=mp.x+(nx/nl)*(box.h*0.9+6), ly=mp.y+(ny/nl)*(box.h*0.9+6);
+          group.addLayer(haloMarker(targetMap,lx,ly,'airstrip-label',ln.meta.label,box));
+          hazardLabelBoxes.push({x:lx,y:ly,w:box.w,h:box.h});
         }
       }
     }
@@ -2156,20 +2535,106 @@ function describeCacheAge(savedAt){
 const GIS_CACHE_KEYS={pl:'powerlines',poles:'poles',roads:'roads'};
 
 const STORE_GIS_PL='spraymap_gis_powerlines_v1';
-let gisPowerlines=[]; // array of rings, each an array of [lat,lng]
-let gisPowerlineMeta=null; // {totalRecords, matched, sourceName}
+/* ---- Power line sources -------------------------------------------------
+   Western Power publish the distribution network and the HV transmission
+   network as SEPARATE statewide shapefiles, and round 18 and earlier could
+   only hold one of them — so an unmarked HV transmission line crossing the
+   country simply never reached the map. That is the most consequential thing
+   this tool can get wrong: an aerial applicator who hits a transmission
+   conductor does not walk away from it, and transmission structures are
+   20-50 m tall against 8-12 m for distribution, so it is not the same hazard
+   drawn bigger, it is a different hazard.
+
+   So the importer now holds a LIST of sources. Each keeps its own file, its
+   own voltage class, its own show/hide and its own delete; all of them
+   re-clip together against the ticked farms and the one buffer, because that
+   is the only part they genuinely share. */
+let gisPlSources=[];        // [{id,name,cls,isZip,raw,lines,total,matched,show}]
+let gisPowerlines=[];       // derived: flat rings currently shown
+let gisPowerlineSegments=[];// derived: [{ring,cls}] — rendering and export need the class
+let gisPowerlineMeta=null;  // {totalRecords, matched, sourceName} — combined, for the saved clip
 const GIS_PL_MARK_CAP=1500; // above this many matched segments, skip the × marks (lines still show) to stay responsive
-// The raw uploaded file is kept in memory (not localStorage — too large) for
-// the life of this browser tab, so changing farm selection or the buffer
-// distance can re-clip instantly without re-browsing for the file.
-let powerlineRawBuffer=null;
-let powerlineIsZip=false;
-let powerlineSourceName=null;
+
+/* Which network a file is, guessed from its name and correctable in the UI.
+   Guessing is right here because Western Power's own export names say it
+   plainly ("DistributionOverheadPowerlinesWP_031",
+   "TransmissionLinesWP_..."), but it is only a guess, so the class is a
+   dropdown on every row rather than a decision made for him. */
+const HV_NAME_HINT=/(^|[^a-z])(hv|transmission|subtransmission|33\s?kv|66\s?kv|132\s?kv|220\s?kv|330\s?kv|500\s?kv)([^a-z]|$)/i;
+function inferPowerlineClass(name){
+  return HV_NAME_HINT.test(String(name||'').replace(/[_\-.]+/g,' ')) ? 'transmission' : 'distribution';
+}
+const PL_CLASS_LABEL={distribution:'Distribution',transmission:'HV transmission'};
+function plSourceId(){ return 'pls_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6); }
+/* Rebuilds the flat arrays the rest of the tool reads. Keeping gisPowerlines
+   as a plain list of rings means the summary, the legend, the KML export and
+   the existing suites did not have to change shape. */
+function rebuildPowerlineDerived(){
+  gisPowerlineSegments=[];
+  gisPlSources.forEach(src=>{
+    if(src.show===false)return;
+    (src.lines||[]).forEach(ring=>gisPowerlineSegments.push({ring:ring,cls:src.cls}));
+  });
+  gisPowerlines=gisPowerlineSegments.map(seg=>seg.ring);
+  const total=gisPlSources.reduce((a,s)=>a+(s.total||0),0);
+  const matched=gisPlSources.reduce((a,s)=>a+(s.matched||0),0);
+  gisPowerlineMeta=gisPlSources.length?{totalRecords:total,matched:matched,
+    sourceName:gisPlSources.map(s=>s.name).join(', ')}:null;
+}
+function powerlineClassCounts(){
+  const out={distribution:0,transmission:0};
+  gisPowerlineSegments.forEach(seg=>{ out[seg.cls]=(out[seg.cls]||0)+1; });
+  return out;
+}
 function gisStatusMessage(result,bufferKm,sourceName){
   let msg=result.matched+' of '+result.totalRecords+' line features fall within '+bufferKm+'km of the ticked farm(s)'+(sourceName?(' — '+sourceName):'')+'.';
   if(result.matched>GIS_PL_MARK_CAP) msg+=' × marks hidden above '+GIS_PL_MARK_CAP+' matched segments to stay responsive (lines still show) — reduce the buffer if you need them.';
   msg+=' Re-clips automatically if you change farm selection or buffer.';
   return msg;
+}
+/* The combined status line, plus one row per file. */
+function refreshPowerlineStatus(extra){
+  const statusEl=document.getElementById('gisPlStatus');
+  const listEl=document.getElementById('plSourceList');
+  const bufferKm=parseFloat((document.getElementById('plBuffer')||{}).value)||2;
+  if(statusEl){
+    if(!gisPlSources.length) statusEl.textContent='';
+    else{
+      const c=powerlineClassCounts();
+      const parts=[];
+      if(c.distribution) parts.push(c.distribution+' distribution');
+      if(c.transmission) parts.push(c.transmission+' HV transmission');
+      const shown=gisPowerlineSegments.length;
+      statusEl.textContent=shown+' segment(s) shown within '+bufferKm+'km of the ticked farm(s)'+
+        (parts.length?(' — '+parts.join(', ')):'')+'. '+
+        (shown>GIS_PL_MARK_CAP?('× marks hidden above '+GIS_PL_MARK_CAP+' segments to stay responsive (lines still show). '):'')+
+        'Re-clips automatically if you change farm selection or buffer.'+(extra?(' '+extra):'');
+    }
+  }
+  if(!listEl)return;
+  listEl.innerHTML='';
+  gisPlSources.forEach(src=>{
+    const row=document.createElement('div'); row.className='gis-src';
+    row.dataset.srcId=src.id; row.dataset.srcName=src.name; row.dataset.srcCls=src.cls;
+    const chk=document.createElement('input'); chk.type='checkbox'; chk.checked=src.show!==false;
+    chk.title='Show this file on the map';
+    chk.onchange=()=>{ src.show=chk.checked; rebuildPowerlineDerived(); refreshPowerlineStatus(); renderEditMap(); if(previewMap) refreshPV(); updateSummary(); };
+    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=src.name; nm.title=src.name;
+    const sel=document.createElement('select');
+    ['distribution','transmission'].forEach(k=>{
+      const o=document.createElement('option'); o.value=k; o.textContent=PL_CLASS_LABEL[k];
+      if(src.cls===k) o.selected=true; sel.appendChild(o);
+    });
+    sel.title='Which network this file is. HV transmission draws heavier and is listed separately in the printed legend.';
+    sel.onchange=()=>{ src.cls=sel.value; persistPowerlineIndex(); rebuildPowerlineDerived(); refreshPowerlineStatus(); renderEditMap(); if(previewMap) refreshPV(); updateSummary(); };
+    const ct=document.createElement('span'); ct.className='ct';
+    ct.textContent=(src.matched||0)+' of '+(src.total||0)+' features'+(src.raw?'':' (source not in memory — reload the file to re-clip)');
+    const del=document.createElement('span'); del.className='del'; del.textContent='🗑';
+    del.title='Remove this file';
+    del.onclick=()=>removePowerlineSource(src.id);
+    row.appendChild(chk); row.appendChild(nm); row.appendChild(sel); row.appendChild(ct); row.appendChild(del);
+    listEl.appendChild(row);
+  });
 }
 
 function webMercToLonLat(x,y){
@@ -2421,43 +2886,84 @@ async function parsePowerlineZip(arrayBuffer,clipBBox){
 
 const powerlineInput=document.getElementById('powerlineInput');
 document.getElementById('loadPowerlineBtn').onclick=()=>powerlineInput.click();
-powerlineInput.onchange=async(e)=>{
-  if(!e.target.files.length)return;
+/* Additive: loading a file ADDS it to the list. Selecting several at once
+   works too, and loading the same file twice replaces that entry rather than
+   drawing it on top of itself. */
+async function addPowerlineFiles(files){
+  if(!files||!files.length)return;
   setGisPanel(true);
-  const file=e.target.files[0];
-  powerlineInput.value='';
-  const statusEl2=document.getElementById('gisPlStatus');
+  const statusEl=document.getElementById('gisPlStatus');
   const bufferKm=parseFloat(document.getElementById('plBuffer').value)||2;
   const bbox=computeFarmLonLatBBox(bufferKm);
   if(!bbox){ alert('Load paddock boundaries first (and tick at least one farm above), then load the power line file — it needs to know what area to clip to.'); return; }
-  statusEl2.textContent='Parsing '+file.name+'…';
-  try{
-    const buf=await file.arrayBuffer();
-    const isZip=file.name.toLowerCase().endsWith('.zip');
-    let result;
-    if(isZip) result=await parsePowerlineZip(buf,bbox);
-    else result=parsePowerlineShpBuffer(buf,bbox);
-    gisPowerlines=result.lines;
-    gisPowerlineMeta={totalRecords:result.totalRecords,matched:result.matched,sourceName:file.name,bufferKm};
-    powerlineRawBuffer=buf; powerlineIsZip=isZip; powerlineSourceName=file.name;
-    try{ localStorage.setItem(STORE_GIS_PL,JSON.stringify({lines:gisPowerlines,meta:gisPowerlineMeta})); }catch(err){}
-    cacheGisSource(GIS_CACHE_KEYS.pl,buf,{isZip,sourceName:file.name});
-    statusEl2.textContent=gisStatusMessage(result,bufferKm,file.name);
-    renderEditMap();
-    updateSummary();
-  }catch(err){
-    statusEl2.textContent='';
-    alert('Error parsing that shapefile: '+err.message);
-    console.error(err);
+  const failed=[];
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    if(statusEl) statusEl.textContent='Parsing '+file.name+' ('+(i+1)+' of '+files.length+')…';
+    try{
+      const buf=await readFileArrayBuffer(file);
+      const isZip=file.name.toLowerCase().endsWith('.zip');
+      const result=isZip?await parsePowerlineZip(buf,bbox):parsePowerlineShpBuffer(buf,bbox);
+      const existing=gisPlSources.find(x=>x.name===file.name);
+      const src=existing||{id:plSourceId(),name:file.name,cls:inferPowerlineClass(file.name),show:true};
+      src.isZip=isZip; src.raw=buf; src.lines=result.lines;
+      src.total=result.totalRecords; src.matched=result.matched;
+      if(!existing) gisPlSources.push(src);
+      cacheGisSource(GIS_CACHE_KEYS.pl+':'+src.id,buf,{isZip,sourceName:file.name,cls:src.cls});
+    }catch(err){
+      console.error(err);
+      failed.push(file.name+' ('+err.message+')');
+    }
   }
+  persistPowerlineIndex();
+  rebuildPowerlineDerived();
+  savePowerlineClip();
+  refreshPowerlineStatus();
+  renderEditMap();
+  updateSummary();
+  if(failed.length) alert('Could not read '+failed.length+' file(s):\n\n'+failed.join('\n'));
+}
+powerlineInput.onchange=async(e)=>{
+  const files=Array.from(e.target.files||[]);
+  powerlineInput.value='';
+  await addPowerlineFiles(files);
 };
+function persistPowerlineIndex(){
+  const index=gisPlSources.map(s=>({id:s.id,name:s.name,cls:s.cls,isZip:!!s.isZip,show:s.show!==false}));
+  cacheGisSource(GIS_CACHE_KEYS.pl+':index',new ArrayBuffer(0),{index:index});
+}
+function savePowerlineClip(){
+  // Only the small clipped result goes to localStorage; the source files are
+  // far too big for it and live in IndexedDB instead.
+  try{
+    localStorage.setItem(STORE_GIS_PL,JSON.stringify({
+      sources:gisPlSources.map(s=>({id:s.id,name:s.name,cls:s.cls,show:s.show!==false,lines:s.lines||[],total:s.total||0,matched:s.matched||0})),
+      meta:gisPowerlineMeta,
+    }));
+  }catch(err){}
+}
+function removePowerlineSource(id){
+  const i=gisPlSources.findIndex(s=>s.id===id);
+  if(i<0)return;
+  forgetGisSource(GIS_CACHE_KEYS.pl+':'+gisPlSources[i].id);
+  gisPlSources.splice(i,1);
+  persistPowerlineIndex();
+  rebuildPowerlineDerived();
+  savePowerlineClip();
+  refreshPowerlineStatus();
+  renderEditMap();
+  if(previewMap) refreshPV();
+  updateSummary();
+}
 document.getElementById('plBuffer').onchange=reclipPowerlines;
 document.getElementById('clearPowerlineBtn').onclick=()=>{
-  gisPowerlines=[]; gisPowerlineMeta=null;
-  powerlineRawBuffer=null; powerlineIsZip=false; powerlineSourceName=null;
+  gisPlSources.forEach(s=>forgetGisSource(GIS_CACHE_KEYS.pl+':'+s.id));
+  forgetGisSource(GIS_CACHE_KEYS.pl+':index');
+  forgetGisSource(GIS_CACHE_KEYS.pl); // the pre-round-19 single-file cache key
+  gisPlSources=[];
+  rebuildPowerlineDerived();
   try{ localStorage.removeItem(STORE_GIS_PL); }catch(e){}
-  forgetGisSource(GIS_CACHE_KEYS.pl);
-  document.getElementById('gisPlStatus').textContent='';
+  refreshPowerlineStatus();
   renderEditMap();
   updateSummary();
 };
@@ -2469,31 +2975,38 @@ document.getElementById('showGisPlChk').onchange=()=>{ renderEditMap(); if(previ
    session, or if a page reload dropped the in-memory buffer (the small
    clipped result survives via localStorage, but the 26MB source doesn't). */
 async function reclipPowerlines(){
-  if(!powerlineRawBuffer)return;
-  const statusEl2=document.getElementById('gisPlStatus');
+  const withSource=gisPlSources.filter(s=>s.raw);
+  if(!withSource.length)return;
   const bufferKm=parseFloat(document.getElementById('plBuffer').value)||2;
   const bbox=computeFarmLonLatBBox(bufferKm);
   if(!bbox)return;
-  try{
-    let result;
-    if(powerlineIsZip) result=await parsePowerlineZip(powerlineRawBuffer,bbox);
-    else result=parsePowerlineShpBuffer(powerlineRawBuffer,bbox);
-    gisPowerlines=result.lines;
-    gisPowerlineMeta={totalRecords:result.totalRecords,matched:result.matched,sourceName:powerlineSourceName,bufferKm};
-    try{ localStorage.setItem(STORE_GIS_PL,JSON.stringify({lines:gisPowerlines,meta:gisPowerlineMeta})); }catch(err){}
-    if(statusEl2) statusEl2.textContent=gisStatusMessage(result,bufferKm,powerlineSourceName);
-    renderGisPowerlines(editMap,gisPowerlineGroup);
-    if(previewMap) refreshPV();
-    updateSummary();
-  }catch(err){ console.error(err); }
+  for(const src of withSource){
+    try{
+      const result=src.isZip?await parsePowerlineZip(src.raw,bbox):parsePowerlineShpBuffer(src.raw,bbox);
+      src.lines=result.lines; src.total=result.totalRecords; src.matched=result.matched;
+    }catch(err){ console.error('re-clip failed for '+src.name,err); }
+  }
+  rebuildPowerlineDerived();
+  savePowerlineClip();
+  refreshPowerlineStatus();
+  renderGisPowerlines(editMap,gisPowerlineGroup);
+  if(previewMap) refreshPV();
+  updateSummary();
 }
 try{
   const savedPl=localStorage.getItem(STORE_GIS_PL);
   if(savedPl){
     const parsed=JSON.parse(savedPl);
-    gisPowerlines=parsed.lines||[];
-    gisPowerlineMeta=parsed.meta||null;
-    if(gisPowerlineMeta) document.getElementById('gisPlStatus').textContent=gisPowerlineMeta.matched+' of '+gisPowerlineMeta.totalRecords+' line features from last session ('+gisPowerlineMeta.sourceName+') — checking this browser for the source file…';
+    if(Array.isArray(parsed.sources)){
+      gisPlSources=parsed.sources.map(x=>Object.assign({},x,{raw:null,isZip:true}));
+    }else if(Array.isArray(parsed.lines)&&parsed.lines.length){
+      // A clip saved before round 19, when there was only ever one file.
+      gisPlSources=[{id:plSourceId(),name:(parsed.meta&&parsed.meta.sourceName)||'power line file',
+        cls:inferPowerlineClass(parsed.meta&&parsed.meta.sourceName),show:true,raw:null,isZip:true,
+        lines:parsed.lines,total:(parsed.meta&&parsed.meta.totalRecords)||0,matched:(parsed.meta&&parsed.meta.matched)||0}];
+    }
+    rebuildPowerlineDerived();
+    if(gisPlSources.length) refreshPowerlineStatus('Clip from last session — checking this browser for the source file(s)…');
   }
 }catch(e){}
 
@@ -2511,14 +3024,37 @@ async function restoreCachedGisSources(){
   gisCacheRestoreDone=true;
   let restored=[];
   try{
-    const pl=await loadGisSource(GIS_CACHE_KEYS.pl);
-    if(pl&&pl.buffer&&!powerlineRawBuffer){
-      powerlineRawBuffer=pl.buffer;
-      powerlineIsZip=!!(pl.meta&&pl.meta.isZip);
-      powerlineSourceName=(pl.meta&&pl.meta.sourceName)||'cached power line file';
+    // Round 19: several power line files can be cached, listed in an index
+    // record. A session cached before that has a single un-indexed record
+    // under the bare key, which is read here so nothing has to be re-uploaded
+    // after the upgrade.
+    const idx=await loadGisSource(GIS_CACHE_KEYS.pl+':index');
+    const entries=(idx&&idx.meta&&Array.isArray(idx.meta.index))?idx.meta.index:[];
+    let any=false, oldestSaved=null;
+    for(const e of entries){
+      const rec=await loadGisSource(GIS_CACHE_KEYS.pl+':'+e.id);
+      if(!rec||!rec.buffer)continue;
+      let src=gisPlSources.find(x=>x.id===e.id)||gisPlSources.find(x=>x.name===e.name);
+      if(!src){ src={id:e.id,name:e.name,cls:e.cls||inferPowerlineClass(e.name),show:e.show!==false,lines:[],total:0,matched:0}; gisPlSources.push(src); }
+      src.raw=rec.buffer; src.isZip=!!(rec.meta&&rec.meta.isZip);
+      if(e.cls) src.cls=e.cls;
+      any=true;
+      if(!oldestSaved||rec.savedAt<oldestSaved) oldestSaved=rec.savedAt;
+    }
+    if(!any){
+      const legacy=await loadGisSource(GIS_CACHE_KEYS.pl);
+      if(legacy&&legacy.buffer){
+        const name=(legacy.meta&&legacy.meta.sourceName)||'cached power line file';
+        let src=gisPlSources.find(x=>x.name===name);
+        if(!src){ src={id:plSourceId(),name:name,cls:inferPowerlineClass(name),show:true,lines:[],total:0,matched:0}; gisPlSources.push(src); }
+        src.raw=legacy.buffer; src.isZip=!!(legacy.meta&&legacy.meta.isZip);
+        persistPowerlineIndex();
+        any=true; oldestSaved=legacy.savedAt;
+      }
+    }
+    if(any){
       await reclipPowerlines();
-      const el=document.getElementById('gisPlStatus');
-      if(el) el.textContent=el.textContent+' Restored from this browser'+describeCacheAge(pl.savedAt)+' — no re-upload needed.';
+      refreshPowerlineStatus('Restored from this browser'+describeCacheAge(oldestSaved)+' — no re-upload needed.');
       restored.push('power lines');
     }
   }catch(e){}
@@ -2554,18 +3090,31 @@ async function restoreCachedGisSources(){
   gisCacheRestoreComplete=true;
 }
 
+/* Both classes keep the contractor's --x--x--x-- convention, because that is
+   what his JotForm legend asks for and what the operator reads as "wire".
+   HV transmission is drawn heavier, with a pale casing behind it and wider
+   marks, so the two are never mistaken for each other on the printed sheet —
+   the distinction matters because transmission structures are 20-50 m tall
+   and a strike is not survivable. */
+const PL_STYLE={
+  distribution:{weight:2,   dash:'10,6',  markPx:40, cls:'pl-mark',    casing:0},
+  transmission:{weight:3.2, dash:'16,9',  markPx:62, cls:'pl-mark-hv', casing:6.5},
+};
 function renderGisPowerlines(targetMap,group){
   if(!group)return;
   group.clearLayers();
-  if(!gisPowerlines.length||!document.getElementById('showGisPlChk').checked)return;
-  const skipMarks=gisPowerlines.length>GIS_PL_MARK_CAP;
-  gisPowerlines.forEach(ring=>{
-    const pl=L.polyline(ring,{color:'#000',weight:2,dashArray:'10,6',interactive:false});
-    group.addLayer(pl);
+  if(!gisPowerlineSegments.length||!document.getElementById('showGisPlChk').checked)return;
+  const skipMarks=gisPowerlineSegments.length>GIS_PL_MARK_CAP;
+  // Transmission last, so it sits on top of the distribution network where
+  // the two run together in a shared easement.
+  const ordered=gisPowerlineSegments.slice().sort((a,b)=>(a.cls==='transmission'?1:0)-(b.cls==='transmission'?1:0));
+  ordered.forEach(seg=>{
+    const st=PL_STYLE[seg.cls]||PL_STYLE.distribution;
+    if(st.casing) group.addLayer(L.polyline(seg.ring,{color:'#b9b9b9',weight:st.casing,opacity:0.85,interactive:false}));
+    group.addLayer(L.polyline(seg.ring,{color:'#000',weight:st.weight,dashArray:st.dash,interactive:false}));
     if(!skipMarks){
-      const marks=computeLineMarks(targetMap,ring,40);
-      marks.forEach(pos=>{
-        group.addLayer(L.marker(pos,{icon:L.divIcon({className:'pl-mark',html:'×',iconSize:[14,14],iconAnchor:[7,7]}),interactive:false}));
+      computeLineMarks(targetMap,seg.ring,st.markPx).forEach(pos=>{
+        group.addLayer(L.marker(pos,{icon:L.divIcon({className:st.cls,html:'×',iconSize:[16,16],iconAnchor:[8,8]}),interactive:false}));
       });
     }
   });
@@ -2738,14 +3287,14 @@ if(poleInputEl) poleInputEl.onchange=async(e)=>{
       result=parsePointsCsvText(text,bbox);
       poleFileKind='csv'; poleRawText=text; poleRawBuffer=null;
     }else if(lower.endsWith('.zip')){
-      const buf=await file.arrayBuffer();
+      const buf=await readFileArrayBuffer(file);
       result=null;
       try{ result=await parsePolesZipIndexed(buf,bbox); }
       catch(err){ console.warn('Indexed pole-zip read failed, falling back to shpjs',err); }
       if(!result) result=await parsePointsZip(buf,bbox);
       poleFileKind='zip'; poleRawBuffer=buf; poleRawText=null;
     }else{
-      const buf=await file.arrayBuffer();
+      const buf=await readFileArrayBuffer(file);
       result=parsePointsShpBuffer(buf,bbox);
       poleFileKind='shp'; poleRawBuffer=buf; poleRawText=null;
     }
@@ -2964,7 +3513,7 @@ if(roadInputEl) roadInputEl.onchange=async(e)=>{
   if(!bbox){ alert('Load paddock boundaries first (and tick at least one farm above), then load the roads file — it needs to know what area to clip to.'); return; }
   statusEl.textContent='Parsing '+file.name+'…';
   try{
-    const buf=await file.arrayBuffer();
+    const buf=await readFileArrayBuffer(file);
     const isZip=file.name.toLowerCase().endsWith('.zip');
     let result=null;
     if(isZip){
@@ -2989,6 +3538,7 @@ if(roadInputEl) roadInputEl.onchange=async(e)=>{
 if(document.getElementById('roadBuffer')) document.getElementById('roadBuffer').onchange=reclipRoads;
 if(document.getElementById('clearRoadBtn')) document.getElementById('clearRoadBtn').onclick=()=>{
   roadFeatures=[]; roadMeta=null; roadRawBuffer=null; roadIsZip=false; roadSourceName=null;
+  syncBasemapToRoadLayer();
   try{ localStorage.removeItem(STORE_GIS_ROADS); }catch(e){}
   forgetGisSource(GIS_CACHE_KEYS.roads);
   document.getElementById('roadStatus').textContent='';
@@ -3013,7 +3563,9 @@ async function reclipRoads(){
     roadMeta={totalRecords:result.totalRecords,matched:result.matched,sourceName:roadSourceName,bufferKm};
     try{ localStorage.setItem(STORE_GIS_ROADS,JSON.stringify({features:roadFeatures,meta:roadMeta})); }catch(err){}
     if(statusEl) statusEl.textContent=roadStatusMessage(result,bufferKm,roadSourceName,result.namesAvailable);
+    syncBasemapToRoadLayer();
     renderRoads(editMap,roadGroup);
+    refreshCircleLabelsDebounced();
     if(previewMap) refreshPV();
     updateSummary();
   }catch(err){ console.error(err); }
@@ -3083,22 +3635,111 @@ function renderRoads(targetMap,group){
   group.clearLayers();
   const chk=document.getElementById('showRoadsChk');
   if(!roadFeatures.length||(chk&&!chk.checked))return;
+  // Drawn the way a road reads on any map: a dark casing with a warm fill on
+  // top, rather than the flat blue line of rounds 8-17 — blue is what water
+  // is, and on this map blue line work next to dashed-black power lines was
+  // the least identifiable thing on the page. Names are NOT drawn here; they
+  // are placed in the label pass so they can dodge the crop hatch and each
+  // other (see renderRoadLabels).
   roadFeatures.forEach(feat=>{
     feat.rings.forEach(ring=>{
-      group.addLayer(L.polyline(ring,{color:'#0066d3',weight:2.5,opacity:0.9,interactive:false}));
+      group.addLayer(L.polyline(ring,{color:'#6b4400',weight:5,opacity:0.95,lineCap:'round',interactive:false}));
+      group.addLayer(L.polyline(ring,{color:'#ffb531',weight:2.6,opacity:1,lineCap:'round',interactive:false}));
     });
-    if(feat.name){
-      const longest=feat.rings.reduce((a,b)=>a.length>=b.length?a:b,feat.rings[0]);
-      const mid=longest[Math.floor(longest.length/2)];
-      const lblIcon=L.divIcon({className:'',html:'<div style="background:#fff;border:1px solid #0066d3;color:#004a99;font-weight:700;font-size:10px;padding:1px 5px;border-radius:3px;white-space:nowrap">'+esc(feat.name)+'</div>',iconSize:[0,0]});
-      group.addLayer(L.marker([mid[0],mid[1]],{icon:lblIcon,interactive:false}));
-    }
   });
   computeRoadCrossroads(roadFeatures).forEach(c=>{
-    group.addLayer(L.circleMarker([c.lat,c.lon],{radius:5,color:'#004a99',fillColor:'#fff',fillOpacity:1,weight:2,interactive:false}));
-    const lblIcon=L.divIcon({className:'',html:'<div style="background:#004a99;color:#fff;font-weight:700;font-size:9px;padding:1px 4px;border-radius:3px;white-space:nowrap">'+esc(c.names.join(' / '))+'</div>',iconSize:[0,0],iconAnchor:[-8,0]});
-    group.addLayer(L.marker([c.lat,c.lon],{icon:lblIcon,interactive:false}));
+    group.addLayer(L.circleMarker([c.lat,c.lon],{radius:4.5,color:'#6b4400',fillColor:'#fff',fillOpacity:1,weight:2,interactive:false}));
   });
+}
+
+/* One label per ROAD, spaced along its length, dodging everything already on
+   the map. The round-17 defect was labelling per shapefile feature: Main
+   Roads WA stores one road as many features, so a single road drew a row of
+   overlapping chips. Rings are grouped by name first, then the longest roads
+   get first claim on the space — which is the order a map reader expects,
+   and it means a minor track loses its label rather than a highway. */
+// Spacing between repeat labels on the same road, and the cap on how many
+// it may have on screen at once. A road visible end to end needs its name
+// once or twice, not five times — repeats are for following a road off the
+// edge of the sheet, not decoration.
+const ROAD_LABEL_GAP_PX=420;
+const ROAD_LABEL_MAX_PER_ROAD=2;
+function renderRoadLabels(targetMap,group){
+  if(!group)return;
+  group.clearLayers();
+  const chk=document.getElementById('showRoadsChk');
+  if(!roadFeatures.length||(chk&&!chk.checked))return;
+  const size=targetMap.getSize();
+  const inView=(pt)=>pt.x>-200&&pt.y>-200&&pt.x<size.x+200&&pt.y<size.y+200;
+
+  // Group every ring under its road name, in screen coordinates.
+  const byName=new Map();
+  roadFeatures.forEach(f=>{
+    if(!f.name)return;
+    f.rings.forEach(ring=>{
+      const pts=ring.map(pr=>targetMap.latLngToContainerPoint(L.latLng(pr[0],pr[1])));
+      if(!pts.some(inView))return;
+      let len=0;
+      for(let i=1;i<pts.length;i++) len+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);
+      if(len<40)return;                      // too short on screen to label
+      if(!byName.has(f.name)) byName.set(f.name,{name:f.name,total:0,lines:[]});
+      const e=byName.get(f.name);
+      e.total+=len; e.lines.push(pts);
+    });
+  });
+  const roads=[...byName.values()].sort((a,b)=>b.total-a.total);
+
+  let placedCount=0, droppedCount=0;
+  roads.forEach(r=>{
+    const box=textBox(r.name,10.5);
+    // Longest ring first, so the label lands on the main run of the road
+    // rather than on a 50m stub of the same name.
+    const lines=r.lines.slice().sort((a,b)=>b.length-a.length);
+    let placedForThisRoad=0;
+    lines.forEach(pts=>{
+      const anchors=walkScreenLine(pts,ROAD_LABEL_GAP_PX);
+      anchors.forEach(a=>{
+        if(placedForThisRoad>=ROAD_LABEL_MAX_PER_ROAD) return;
+        // Every road gets at least one attempt; extra labels along a long
+        // road are a nice-to-have and are not allowed over crop hatch at all.
+        const first=(placedForThisRoad===0);
+        const spot=placeAlongLine(targetMap,a,box,{avoidTreated:true,allowOverTreated:first});
+        if(!spot){ droppedCount++; return; }
+        group.addLayer(haloMarker(targetMap,spot.x,spot.y,'road-label',r.name,box));
+        labelReserve(spot.x,spot.y,box.w,box.h);
+        placedForThisRoad++; placedCount++;
+      });
+    });
+  });
+
+  // Crossroads are useful for navigating in, but they are the lowest priority
+  // text on the page: labelled only where there is genuinely clear space.
+  computeRoadCrossroads(roadFeatures).forEach(c=>{
+    const text=c.names.join(' \u00d7 ');
+    const box=textBox(text,9.5);
+    const pt=targetMap.latLngToContainerPoint(L.latLng(c.lat,c.lon));
+    if(!inView(pt))return;
+    const anchor={x:pt.x,y:pt.y,dx:1,dy:0};
+    const spot=placeAlongLine(targetMap,anchor,box,{avoidTreated:true,allowOverTreated:false,offsets:[-14,14,-24,24,-36,36]});
+    if(!spot)return;
+    group.addLayer(haloMarker(targetMap,spot.x,spot.y,'xroad-label',text,box));
+    labelReserve(spot.x,spot.y,box.w,box.h);
+  });
+  roadLabelStats={roads:roads.length,placed:placedCount,dropped:droppedCount};
+}
+let roadLabelStats={roads:0,placed:0,dropped:0};
+
+/* The one place map text is placed, in priority order, sharing one occupancy
+   list. Called after the geometry layers have been drawn. */
+function refreshMapLabels(targetMap,polyLayers,circleGroup,nameGroup,roadLblGroup,showNames){
+  labelPassBegin();
+  treatedRingsCache=null;
+  hazardLabelBoxes.forEach(b=>labelReserve(b.x,b.y,b.w,b.h));
+  smartCircleLabels(targetMap,polyLayers,circleGroup,getCircleSize());
+  if(showNames) smartLabels(targetMap,polyLayers,nameGroup,10);
+  else if(nameGroup) nameGroup.clearLayers();
+  renderRoadLabels(targetMap,roadLblGroup);
+  treatedRingsCache=null;
 }
 
 /* ================= LINE DRAWING (edit) ================= */
@@ -3616,6 +4257,7 @@ editMap.on('mouseout',function(){ if(armedExclusion){ clearSnapIndicator(); clea
 /* ================= EDIT MAP RENDER LOOP ================= */
 let editDebounce=null;
 function renderEditMap(){
+  syncBasemapToRoadLayer();
   const grp=addPolygons(editMap,editPolyLayers,true);
   rebuildSnapIndex();
   if(grp.length) editMap.fitBounds(L.featureGroup(grp).getBounds(),{padding:[30,30]});
@@ -3627,9 +4269,8 @@ function renderEditMap(){
   renderExclusions(editMap,exclusionGroup);
   clearTimeout(editDebounce);
   editDebounce=setTimeout(()=>{
-    smartCircleLabels(editMap,editPolyLayers,editCircleGroup,getCircleSize());
-    if(document.getElementById('showNamesChk').checked) smartLabels(editMap,editPolyLayers,editNameGroup,10);
-    else editNameGroup.clearLayers();
+    refreshMapLabels(editMap,editPolyLayers,editCircleGroup,editNameGroup,roadLabelGroup,
+                     document.getElementById('showNamesChk').checked);
   },200);
 }
 // Only zoom changes pixel-space distances at a fixed scale, so only zoomend
@@ -3640,10 +4281,9 @@ function renderEditMap(){
 editMap.on('zoomend',()=>{
   clearTimeout(editDebounce);
   editDebounce=setTimeout(()=>{
-    smartCircleLabels(editMap,editPolyLayers,editCircleGroup,getCircleSize());
-    if(document.getElementById('showNamesChk').checked) smartLabels(editMap,editPolyLayers,editNameGroup,10);
-    else editNameGroup.clearLayers();
     refreshEditHazards();
+    refreshMapLabels(editMap,editPolyLayers,editCircleGroup,editNameGroup,roadLabelGroup,
+                     document.getElementById('showNamesChk').checked);
     renderGisPowerlines(editMap,gisPowerlineGroup);
     renderPoles(editMap,poleGroup);   // pole thinning is screen-space, so it changes with zoom
   },150);
@@ -3752,7 +4392,14 @@ function updatePaddockListRow(id){
 let circleDebounce=null;
 function refreshCircleLabelsDebounced(){
   clearTimeout(circleDebounce);
-  circleDebounce=setTimeout(()=>smartCircleLabels(editMap,editPolyLayers,editCircleGroup,getCircleSize()),120);
+  circleDebounce=setTimeout(()=>{
+    // Every label on the map is re-placed together, because they share the
+    // same pixels. Assigning a crop used to redraw only the circle, which
+    // left the paddock name sitting underneath the new letter — the name and
+    // hectares unreadable on exactly the paddocks being sprayed.
+    refreshMapLabels(editMap,editPolyLayers,editCircleGroup,editNameGroup,roadLabelGroup,
+                     document.getElementById('showNamesChk').checked);
+  },120);
 }
 
 /* ================= COMMENTS ================= */
@@ -3781,7 +4428,13 @@ function updateGisToggleSummary(){
   const el=document.getElementById('gisToggleSummary');
   if(!el)return;
   const bits=[];
-  if(gisPowerlines.length) bits.push(gisPowerlines.length+' power line segments');
+  if(gisPowerlineSegments.length){
+    const c=powerlineClassCounts();
+    const parts=[];
+    if(c.distribution) parts.push(c.distribution+' distribution');
+    if(c.transmission) parts.push(c.transmission+' HV transmission');
+    bits.push(parts.join(' + ')+' line segments from '+gisPlSources.length+' file'+(gisPlSources.length===1?'':'s'));
+  }
   if(typeof polePoints!=='undefined'&&polePoints.length) bits.push(polePoints.length+' poles');
   if(typeof roadFeatures!=='undefined'&&roadFeatures.length) bits.push(roadFeatures.length+' roads');
   el.textContent=bits.length?'— '+bits.join(', '):'— power lines, poles, roads (none loaded)';
@@ -3834,7 +4487,15 @@ function updateSummary(){
   if(farmHazards.length||farmLines.length||gisPlVisible||polesVisible||roadsVisible){
     const hz=document.createElement('div'); hz.className='tag'; hz.style.background='#f3f3f3';
     hz.textContent=farmHazards.length+' hazard marker(s), '+farmLines.length+' drawn line(s)'
-      +(gisPlVisible?', '+gisPowerlines.length+' GIS power line segment(s)':'')
+      +(gisPlVisible?(function(){
+          const c=powerlineClassCounts();
+          const parts=[];
+          if(c.distribution) parts.push(c.distribution+' GIS power line segment(s)');
+          // Named separately on the operator's own screen too — a transmission
+          // line in the job area is the single most important thing on it.
+          if(c.transmission) parts.push(c.transmission+' HV TRANSMISSION segment(s)');
+          return ', '+parts.join(', ');
+        })():'')
       +(polesVisible?', '+polePoints.length+' power pole(s)':'')
       +(roadsVisible?', '+roadFeatures.length+' road feature(s)':'');
     bar.appendChild(hz);
@@ -3874,9 +4535,21 @@ function updateSummary(){
       pl.appendChild(d);
     });
     if(hasPower){
-      const d=document.createElement('div'); d.className='li';
-      d.innerHTML='<div class="lg-pline">— × — × —</div>Power Line';
-      pl.appendChild(d);
+      // Manually drawn power lines and any distribution file share the one
+      // entry; HV transmission gets its own, because the operator needs to
+      // know which wire he is looking at.
+      const c=gisPlVisible?powerlineClassCounts():{distribution:0,transmission:0};
+      const hasDist=farmLines.some(l=>l.type==='powerline')||c.distribution>0;
+      if(hasDist){
+        const d=document.createElement('div'); d.className='li';
+        d.innerHTML='<div class="lg-pline">— × — × —</div>Power Line';
+        pl.appendChild(d);
+      }
+      if(c.transmission>0){
+        const d=document.createElement('div'); d.className='li';
+        d.innerHTML='<div class="lg-pline" style="font-weight:800;letter-spacing:1px">═ × ═ × ═</div>HV Transmission Line';
+        pl.appendChild(d);
+      }
     }
     if(hasAirstrip){
       const d=document.createElement('div'); d.className='li';
@@ -3946,6 +4619,7 @@ document.getElementById('newJobBtn').onclick=()=>{
 };
 
 /* ================= PREVIEW / PRINT ================= */
+let previewRoadLabelGroup=null;
 let previewMap=null, previewPolyLayers={}, previewCircleGroup=null, previewHazardGroup=null, previewGisPowerlineGroup=null, previewPoleGroup=null, previewRoadGroup=null, previewExclusionGroup=null, pvDebounce=null;
 function setPageSize(){
   const pg=document.getElementById('pvPage').value, or=document.getElementById('pvOrient').value;
@@ -3995,12 +4669,14 @@ function refreshPV(){
   if(!previewMap)return;
   clearTimeout(pvDebounce);
   pvDebounce=setTimeout(()=>{
-    smartCircleLabels(previewMap,previewPolyLayers,previewCircleGroup,getCircleSize());
     renderHazardsAndLines(previewMap,previewHazardGroup,getHazardSize());
     renderGisPowerlines(previewMap,previewGisPowerlineGroup);
     renderPoles(previewMap,previewPoleGroup);
     renderRoads(previewMap,previewRoadGroup);
     renderExclusions(previewMap,previewExclusionGroup);
+    // The printed sheet has no paddock-name aid; names there come from the
+    // paddock list. Crop letters and road names share the page.
+    refreshMapLabels(previewMap,previewPolyLayers,previewCircleGroup,null,previewRoadLabelGroup,false);
   },150);
 }
 function enterPreview(){
@@ -4014,7 +4690,7 @@ function enterPreview(){
   if(previewMap){ previewMap.remove(); previewMap=null; }
   setTimeout(()=>{
     previewMap=L.map('previewMap',{zoomControl:false,attributionControl:false,zoomSnap:0.1,zoomDelta:0.25,wheelPxPerZoomLevel:120});
-    makeTile(editTileType).addTo(previewMap);
+    makeTile(editTileType,previewMap).addTo(previewMap);
     applyTileFilterClass(document.getElementById('previewMap'),editTileType);
     L.control.scale({imperial:false,position:'bottomleft'}).addTo(previewMap);
     previewCircleGroup=L.layerGroup().addTo(previewMap);
@@ -4022,6 +4698,7 @@ function enterPreview(){
     previewGisPowerlineGroup=L.layerGroup().addTo(previewMap);
     previewPoleGroup=L.layerGroup().addTo(previewMap);
     previewRoadGroup=L.layerGroup().addTo(previewMap);
+    previewRoadLabelGroup=L.layerGroup().addTo(previewMap);
     previewExclusionGroup=L.layerGroup().addTo(previewMap);
     const grp=addPolygons(previewMap,previewPolyLayers,false);
     if(grp.length) previewMap.fitBounds(L.featureGroup(grp).getBounds(),{padding:[25,25]});
@@ -4253,11 +4930,13 @@ function buildKML(icons,bundleIcons){
   });
 
   // GIS-imported power lines, only if currently toggled on.
-  if(gisPowerlines.length&&document.getElementById('showGisPlChk').checked){
-    gisPowerlines.forEach(ring=>{
-      const coords=ring.map(([lat,lng])=>lng.toFixed(7)+','+lat.toFixed(7)+',0').join(' ');
-      placemarks+='<Placemark><name>Power Line (GIS)</name>'+
-        '<styleUrl>#style_powerline</styleUrl>'+
+  if(gisPowerlineSegments.length&&document.getElementById('showGisPlChk').checked){
+    gisPowerlineSegments.forEach(seg=>{
+      const coords=seg.ring.map(([lat,lng])=>lng.toFixed(7)+','+lat.toFixed(7)+',0').join(' ');
+      const hv=seg.cls==='transmission';
+      placemarks+='<Placemark><name>'+(hv?'HV Transmission Line (GIS)':'Power Line (GIS)')+'</name>'+
+        (hv?'<description>High voltage transmission — structures typically 20-50 m. Do not overfly.</description>':'')+
+        '<styleUrl>'+(hv?'#style_hvline':'#style_powerline')+'</styleUrl>'+
         '<LineString><tessellate>1</tessellate><coordinates>'+coords+'</coordinates></LineString></Placemark>';
     });
   }
@@ -4304,7 +4983,8 @@ function buildKML(icons,bundleIcons){
     '<Style id="style_airstrip"><LineStyle><color>ff2c3ee7</color><width>3</width></LineStyle></Style>'+
     iconStyleTag('style_airstrip_arrow','airstrip_arrow','<scale>1.0</scale>')+
     iconStyleTag('style_powerpole','powerpole','<scale>0.9</scale>')+
-    '<Style id="style_road"><LineStyle><color>ff0066d3</color><width>2</width></LineStyle></Style>';
+    '<Style id="style_road"><LineStyle><color>ff0066d3</color><width>2</width></LineStyle></Style>'+
+    '<Style id="style_hvline"><LineStyle><color>ff0000ff</color><width>4</width></LineStyle></Style>';
 
   return '<?xml version="1.0" encoding="UTF-8"?>'+
     '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'+

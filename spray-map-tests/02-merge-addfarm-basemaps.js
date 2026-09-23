@@ -83,7 +83,7 @@ const path = require('path');
   if (checkboxLabels.length !== 2) throw new Error('Expected 2 farm checkboxes in the DOM, got ' + checkboxLabels.length);
 
   // --- Test C: basemap switching through all 5 options, no crash ---
-  for (const val of ['roads','osm','sat','hybrid','bw']) {
+  for (const val of ['roads','topo','sat','hybrid','bw','custom']) {
     await page.selectOption('#basemapSel', val);
     await page.waitForTimeout(250);
   }
