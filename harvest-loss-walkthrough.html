@@ -1,9 +1,1093 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Temporarily withdrawn</title>
-<style>body{font-family:system-ui,sans-serif;max-width:560px;margin:80px auto;padding:0 20px;color:#222;line-height:1.5}</style>
-</head><body>
-<h1>Temporarily withdrawn</h1>
-<p>This page was published with an incomplete redaction pass and has been pulled down while it's corrected. It will be back shortly with the farm-specific figures properly removed.</p>
-</body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Harvest Loss Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+</head>
+<body>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #070A08;
+  --surface-glass: rgba(17, 23, 20, 0.75);
+  --surface-2: #18221D;
+  --ink: #EDF2EC;
+  --ink-2: #B0C0B5;
+  --muted: #8A9B8F;
+  --line: rgba(212, 225, 215, 0.12);
+  --line-strong: rgba(212, 225, 215, 0.25);
+
+  --amber: #F59E0B;
+  --amber-glow: rgba(245, 158, 11, 0.35);
+  --amber-soft: rgba(245, 158, 11, 0.12);
+  --amber-2: #FBBF24;
+  --emerald: #10B981;
+
+  --stage: #0D1310;
+  --stage-2: #141D18;
+  --stage-ink: #F0F5EE;
+  --stage-dim: rgba(240, 245, 238, 0.68);
+  --stage-line: rgba(240, 245, 238, 0.14);
+
+  --shadow: 0 12px 36px -8px rgba(0,0,0,0.7), 0 2px 6px rgba(0,0,0,0.4);
+
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --disp: "Archivo", system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 80% 100%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+.wrap { max-width: 1100px; margin: 0 auto; padding-left: 20px; padding-right: 20px; }
+
+.mast { padding-block: 28px 16px; }
+.eyebrow {
+  font-family: var(--disp); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber);
+  margin: 0 0 10px; display: flex; align-items: center; gap: 9px;
+}
+.eyebrow::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--amber); box-shadow: 0 0 8px var(--amber);
+}
+h1 {
+  font-family: var(--disp); font-weight: 800;
+  font-size: clamp(26px, 4.2vw, 38px); line-height: 1.1;
+  letter-spacing: -0.025em; margin: 0 0 8px;
+  color: #F4F8F3;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C5D4C9 100%);
+  -webkit-background-clip: text; background-clip: text;
+  text-wrap: balance;
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  h1 { -webkit-text-fill-color: transparent; }
+}
+.sub { color: var(--ink-2); font-size: 15px; margin: 0; max-width: 68ch; }
+
+.rail { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-block: 16px 12px; }
+.rail::-webkit-scrollbar { display: none; }
+.rail button {
+  font-family: var(--disp); font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 8px 16px; border-radius: 30px; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--line-strong); background: var(--surface-glass);
+  backdrop-filter: blur(8px); color: var(--ink-2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.rail button .n { font-family: var(--mono); opacity: 0.5; margin-right: 6px; }
+.rail button:hover { border-color: var(--amber); color: var(--ink); transform: translateY(-1px); }
+.rail button[aria-current="true"] { background: var(--amber); border-color: var(--amber); color: #120A00; box-shadow: 0 0 16px var(--amber-glow); }
+.rail button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+.stagewrap { position: relative; border-radius: 16px; overflow: hidden; background: var(--stage); border: 1px solid var(--line-strong); box-shadow: var(--shadow); }
+.stage { position: relative; width: 100%; aspect-ratio: 16/9; color: var(--stage-ink); background: radial-gradient(circle at 50% 50%, #17221C 0%, #0D1310 100%); }
+.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+.scene.live { display: block; }
+
+.poster {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px;
+  background: radial-gradient(circle at 50% 40%, rgba(20, 30, 24, 0.9), rgba(9, 13, 10, 0.98));
+  backdrop-filter: blur(6px);
+  z-index: 10; text-align: center; padding: 24px;
+}
+.poster h2 { font-family: var(--disp); font-weight: 800; font-size: clamp(22px, 3.8vw, 34px); color: #FFFFFF; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.poster p { color: var(--stage-dim); font-size: 15px; margin: 0; max-width: 52ch; line-height: 1.6; }
+.bigplay {
+  display: inline-flex; align-items: center; gap: 12px; cursor: pointer;
+  font-family: var(--disp); font-weight: 700; font-size: 16px; letter-spacing: 0.02em;
+  background: linear-gradient(135deg, var(--amber-2) 0%, var(--amber) 100%);
+  color: #140C02; border: 0; border-radius: 40px; padding: 14px 28px 14px 24px;
+  box-shadow: 0 4px 20px var(--amber-glow); transition: all 0.2s ease;
+}
+.bigplay:hover { transform: scale(1.03); box-shadow: 0 6px 28px rgba(245, 158, 11, 0.5); }
+.bigplay:focus-visible { outline: 3px solid var(--amber-2); outline-offset: 3px; }
+.poster .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+.objectives { list-style: none; margin: 0; padding: 0; max-width: 60ch; text-align: left; display: grid; gap: 7px; }
+.objectives li { position: relative; padding-left: 22px; font-size: 14px; line-height: 1.45; color: var(--stage-dim); }
+.objectives li::before { content: ""; position: absolute; left: 4px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
+@media (max-height: 560px) { .objectives { display: none; } }
+
+.stop { position: absolute; inset: 0; z-index: 12; background: rgba(10, 15, 12, 0.96); backdrop-filter: blur(12px); display: none; overflow-y: auto; padding: 28px; }
+.stop.live { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.stop-in { max-width: 780px; margin: 0 auto; color: var(--stage-ink); }
+.stop h3 { font-family: var(--disp); font-weight: 800; font-size: clamp(18px, 2.8vw, 26px); margin: 0 0 6px; color: var(--amber); letter-spacing: -0.01em; }
+.stop p { font-size: 14.5px; color: var(--stage-dim); margin: 0 0 20px; max-width: 64ch; }
+.stop .fieldrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stop label { display: block; font-family: var(--disp); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.stop input, .stop select {
+  width: 100%; font-family: var(--mono); font-size: 14px; padding: 9px 11px;
+  border-radius: 8px; border: 1px solid var(--stage-line); background: #090E0B;
+  color: var(--stage-ink); font-variant-numeric: tabular-nums; transition: border-color 0.2s ease;
+}
+.stop input:focus, .stop select:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 10px var(--amber-soft); }
+.outs { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--stage-line); border: 1px solid var(--stage-line); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+.outs div { background: #090E0B; padding: 12px 16px; }
+.outs .k { font-family: var(--disp); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.outs .v { font-family: var(--mono); font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; }
+.outs .v.amber { color: var(--amber); }
+.podrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+@media(max-width: 640px){ .podrow { grid-template-columns: 1fr; } }
+.podrow button { cursor: pointer; text-align: left; background: #090E0B; border: 1.5px solid var(--stage-line); border-radius: 10px; padding: 14px; color: var(--stage-ink); font-family: var(--body); transition: all 0.2s ease; }
+.podrow button:hover { border-color: var(--amber); background: var(--surface-2); }
+.podrow button[aria-pressed="true"] { border-color: var(--amber); background: rgba(245, 158, 11, 0.1); box-shadow: 0 0 12px var(--amber-soft); }
+.podrow b { display: block; font-family: var(--disp); font-size: 14px; margin-bottom: 4px; color: var(--amber); }
+.podrow span { font-size: 13px; color: var(--stage-dim); line-height: 1.4; }
+#pod-answer { font-family: var(--mono); font-size: 13.5px; line-height: 1.65; background: #060A08; border: 1px solid var(--stage-line); border-radius: 10px; padding: 16px; margin-bottom: 20px; min-height: 52px; color: #D1E0D5; overflow-x: auto; }
+.resume { cursor: pointer; font-family: var(--disp); font-weight: 700; font-size: 14px; background: var(--amber); color: #140C02; border: 0; border-radius: 30px; padding: 12px 26px; box-shadow: 0 2px 12px var(--amber-glow); transition: transform 0.2s ease; }
+.resume:hover { transform: translateY(-1px); }
+.resume:focus-visible { outline: 3px solid var(--amber-2); outline-offset: 3px; }
+
+.caption { background: var(--stage-2); border-top: 1px solid var(--stage-line); color: var(--stage-ink); padding: 18px 24px; min-height: 96px; display: flex; align-items: center; font-size: clamp(15px, 2.1vw, 19px); line-height: 1.45; letter-spacing: -0.005em; }
+
+.transport { background: var(--stage); border-top: 1px solid var(--stage-line); padding: 12px 18px 14px; color: var(--stage-ink); }
+.scrub { position: relative; height: 24px; cursor: pointer; margin-bottom: 8px; }
+.scrub .track { position: absolute; left: 0; right: 0; top: 10px; height: 5px; border-radius: 3px; background: rgba(240, 245, 238, 0.12); }
+.scrub .fill { position: absolute; left: 0; top: 10px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--amber) 0%, var(--amber-2) 100%); width: 0; box-shadow: 0 0 8px var(--amber-glow); }
+.scrub .mark { position: absolute; top: 6px; width: 2px; height: 13px; background: rgba(240, 245, 238, 0.4); border-radius: 1px; }
+.scrub .knob { position: absolute; top: 5px; width: 15px; height: 15px; border-radius: 50%; background: #FFFFFF; border: 2px solid var(--amber); margin-left: -7px; pointer-events: none; box-shadow: 0 0 10px var(--amber); }
+.scrub:focus-visible { outline: 2px solid var(--amber); outline-offset: 4px; border-radius: 4px; }
+.ctrls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ctrls button { cursor: pointer; background: transparent; border: 1px solid var(--stage-line); color: var(--stage-ink); border-radius: 8px; padding: 7px 14px; font-family: var(--disp); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; transition: all 0.2s ease; }
+.ctrls button:hover { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,0.05); }
+.ctrls button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.ctrls button.primary { background: var(--amber); border-color: var(--amber); color: #140C02; min-width: 86px; font-weight: 700; }
+.ctrls button.primary:hover { background: var(--amber-2); }
+.ctrls .time { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin-left: 4px; }
+.ctrls #soundbtn { display: inline-flex; align-items: center; gap: 7px; }
+.ctrls #soundbtn svg { width: 16px; height: 16px; flex: none; }
+.ctrls #soundbtn.muted { background: rgba(245,158,11,0.16); border-color: var(--amber); color: var(--amber); }
+.ctrls button.mini { padding: 5px 10px; font-size: 11px; font-weight: 500; color: var(--muted); }
+.audstat { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.audstat.bad { color: var(--amber); }
+.speedgrp { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid var(--stage-line); border-radius: 9px; }
+.ctrls .speedgrp button { padding: 4px 8px; border: 1px solid transparent; border-radius: 6px; font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: 0; color: var(--stage-dim); }
+.ctrls .speedgrp button:hover { border-color: var(--stage-line); color: var(--amber); background: transparent; }
+.ctrls .speedgrp button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #140C02; }
+@media(max-width: 520px){ .ctrls .speedgrp button { padding: 4px 6px; font-size: 11px; } }
+.ctrls.voicerow { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--stage-line); }
+.ctrls .vlabel { font-family: var(--disp); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.voicegrp { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; border: 1px solid var(--stage-line); border-radius: 9px; }
+.ctrls .voicegrp button { padding: 5px 10px; border: 1px solid transparent; border-radius: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0; color: var(--stage-ink); }
+.ctrls .voicegrp button small { font-weight: 400; font-size: 11px; color: var(--muted); margin-left: 6px; }
+.ctrls .voicegrp button:hover { border-color: var(--stage-line); color: var(--amber); background: transparent; }
+.ctrls .voicegrp button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #140C02; }
+.ctrls .voicegrp button[aria-pressed="true"] small { color: #3d2705; }
+@media(max-width: 520px){ .ctrls .voicegrp button small { display: block; margin: 0; } }
+.ctrls .spacer { flex: 1; }
+.ctrls .now { font-family: var(--disp); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+@media(max-width: 580px){ .ctrls .now { display: none; } }
+
+.notes { padding-block: 28px 60px; }
+.notegrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
+@media(max-width: 840px){ .notegrid { grid-template-columns: 1fr; } }
+.note { background: var(--surface-glass); border: 1px solid var(--line); border-radius: 12px; padding: 18px; backdrop-filter: blur(8px); }
+.note h4 { font-family: var(--disp); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin: 0 0 8px; }
+.note p { margin: 0; font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.hint { font-size: 13px; color: var(--muted); margin-top: 18px; line-height: 1.5; }
+
+.cue { opacity: 0; transition: opacity 0.45s ease; }
+.cue.on { opacity: 1; }
+.off { display: none !important; }
+.grow { transform-box: fill-box; transform-origin: left center; transform: scaleX(0); transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1); }
+.grow.on { transform: scaleX(1); }
+.growr { transform-origin: right center; }
+@media (prefers-reduced-motion: reduce){
+  .cue, .grow { transition: none !important; }
+  .grow { transform: scaleX(1); }
+  .grow:not(.on) { opacity: 0; }
+}
+</style>
+
+<div class="wrap mast">
+  <div class="eyebrow">Annadale &middot; Pre-Harvest 2026</div>
+  <h1>Harvest settings and the automation</h1>
+  <p class="sub">Two chapters from the longer Annadale walkthrough, built from the John Deere X Series optimisation material: how to set a combine without chasing rotor speed, and why the automation needs a measured target. Farm-specific figures are not in this public edition.</p>
+</div>
+
+<div class="wrap">
+  <div class="rail" id="rail"></div>
+
+  <div class="stagewrap">
+    <div class="stage" id="stage">
+
+      <svg aria-hidden="true" focusable="false" style="height:0;width:0;position:absolute">
+        <defs>
+          <linearGradient id="amber-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#F59E0B"/><stop offset="100%" stop-color="#FBBF24"/>
+          </linearGradient>
+          <filter id="glow-filter" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+        </defs>
+      </svg>
+
+      <!-- ================= SCENE A ================= -->
+      <svg class="scene" id="sc-a" viewBox="0 0 960 540" aria-hidden="true"></svg>
+
+      <!-- ================= SCENE B ================= -->
+      <svg class="scene" id="sc-b" viewBox="0 0 960 540" aria-hidden="true"></svg>
+
+      <!-- ================= SCENE C ================= -->
+      <svg class="scene" id="sc-c" viewBox="0 0 960 540" aria-hidden="true"></svg>
+
+      <!-- ================= SCENE D ================= -->
+      <svg class="scene" id="sc-d" viewBox="0 0 960 540" role="img" aria-label="Two ways to thresh the same wheat compared on power, straw damage, grain damage and throughput, then the canola pod squeeze test.">
+        <g data-until="6">
+          <text class="cue" data-cue="1" x="50" y="48" font-family="Archivo" font-size="14" font-weight="700" letter-spacing="2.4" fill="var(--muted)">TWO WAYS TO THRESH THE SAME WHEAT</text>
+          <g class="cue" data-cue="1">
+            <rect x="50" y="76" width="400" height="152" rx="10" fill="#090E0B" stroke="var(--stage-line)" stroke-width="1.8"/>
+            <text x="74" y="112" font-family="Archivo" font-size="18" font-weight="700" fill="var(--stage-dim)">A &nbsp;Speed and clamp</text>
+            <g font-family="IBM Plex Mono" font-size="16" fill="var(--stage-dim)">
+              <text x="74" y="146">rotor 1300 rpm</text><text x="74" y="174">concave 0 mm</text><text x="74" y="202">covers 0</text>
+            </g>
+          </g>
+          <g class="cue" data-cue="2">
+            <rect x="510" y="76" width="400" height="152" rx="10" fill="#0E1712" stroke="var(--amber)" stroke-width="2.5" filter="url(#glow-filter)"/>
+            <text x="534" y="112" font-family="Archivo" font-size="18" font-weight="700" fill="var(--amber)">B &nbsp;Geometry and time</text>
+            <g font-family="IBM Plex Mono" font-size="16" fill="var(--stage-ink)">
+              <text x="534" y="146">rotor 1000 rpm</text><text x="534" y="174">concave 12 mm</text><text x="534" y="202">covers 3</text>
+            </g>
+          </g>
+          <text class="cue" data-cue="3" x="480" y="262" text-anchor="middle" font-family="IBM Plex Sans" font-size="18" fill="var(--stage-dim)">Deere&rsquo;s own guide says these thresh equally well.</text>
+          <g class="cue" data-cue="4">
+            <g font-family="Archivo" font-size="15" font-weight="600" fill="currentColor">
+              <text x="50" y="320">Rotor power draw</text><text x="50" y="366">Straw damage, chaff to shoe</text>
+              <text x="50" y="412">Grain damage risk</text><text x="50" y="458">Throughput</text>
+            </g>
+            <g fill="var(--stage-ink)" fill-opacity=".22">
+              <rect x="430" y="304" width="480" height="20" rx="5"/><rect x="430" y="350" width="456" height="20" rx="5"/>
+              <rect x="430" y="396" width="420" height="20" rx="5"/><rect x="430" y="442" width="288" height="20" rx="5"/>
+            </g>
+            <g fill="url(#amber-grad)">
+              <rect x="430" y="304" width="228" height="20" rx="5"/><rect x="430" y="350" width="192" height="20" rx="5"/>
+              <rect x="430" y="396" width="168" height="20" rx="5"/><rect x="430" y="442" width="480" height="20" rx="5"/>
+            </g>
+            <text x="50" y="492" font-family="IBM Plex Mono" font-size="12" fill="var(--muted)">amber = option B &middot; grey = option A &middot; bars are directional, not measured</text>
+          </g>
+          <text class="cue" data-cue="5" x="50" y="522" font-family="Archivo" font-size="17" font-weight="700" fill="var(--amber)">Thresh with covers and clearance before you thresh with rotor speed.</text>
+        </g>
+
+        <g>
+          <text class="cue" data-cue="6" x="50" y="55" font-family="Archivo" font-size="14" font-weight="700" letter-spacing="2.4" fill="var(--muted)">THE CANOLA POD SQUEEZE TEST</text>
+          <text class="cue" data-cue="6" x="50" y="95" font-family="IBM Plex Sans" font-size="20" fill="var(--stage-ink)">Ten to fifteen full pods in your hand. One good squeeze.</text>
+          <g class="cue" data-cue="7">
+            <rect x="50" y="135" width="280" height="260" rx="10" fill="#090E0B" stroke="var(--stage-line)" stroke-width="1.8"/>
+            <text x="74" y="172" font-family="Archivo" font-size="15" font-weight="700" letter-spacing="1.2" fill="var(--amber)">MOST BREAK OPEN</text>
+            <g font-family="IBM Plex Sans" font-size="16" fill="var(--stage-dim)">
+              <text x="74" y="212">Open and gentle.</text><text x="74" y="240">Concave 30 mm and up,</text><text x="74" y="268">rotor low.</text>
+            </g>
+            <text x="74" y="330" font-family="IBM Plex Mono" font-size="12.5" fill="var(--muted)">seed that shatters in the wind</text>
+            <text x="74" y="350" font-family="IBM Plex Mono" font-size="12.5" fill="var(--muted)">needs no help from the rotor</text>
+          </g>
+          <g class="cue" data-cue="8">
+            <rect x="340" y="135" width="280" height="260" rx="10" fill="#090E0B" stroke="var(--stage-line)" stroke-width="1.8"/>
+            <text x="364" y="172" font-family="Archivo" font-size="15" font-weight="700" letter-spacing="1.2" fill="var(--amber)">ABOUT HALF</text>
+            <g font-family="IBM Plex Sans" font-size="16" fill="var(--stage-dim)">
+              <text x="364" y="212">Moderate aggression.</text><text x="364" y="240">Concave around 20 mm.</text>
+            </g>
+            <text x="364" y="330" font-family="IBM Plex Mono" font-size="12.5" fill="var(--muted)">go harder once the dew</text>
+            <text x="364" y="350" font-family="IBM Plex Mono" font-size="12.5" fill="var(--muted)">sets in</text>
+          </g>
+          <g class="cue" data-cue="9">
+            <rect x="630" y="135" width="280" height="260" rx="10" fill="#0E1712" stroke="var(--amber)" stroke-width="2.5" filter="url(#glow-filter)"/>
+            <text x="654" y="172" font-family="Archivo" font-size="15" font-weight="700" letter-spacing="1.2" fill="var(--amber)">VERY FEW OPEN</text>
+            <g font-family="IBM Plex Sans" font-size="16" fill="var(--stage-ink)">
+              <text x="654" y="212">Most aggressive.</text><text x="654" y="240">Concave 5&ndash;10 mm,</text><text x="654" y="268">rotor 900 rpm.</text>
+            </g>
+            <text x="654" y="330" font-family="IBM Plex Mono" font-size="12.5" fill="var(--muted)">shatter-resistant, wet,</text>
+            <text x="654" y="350" font-family="IBM Plex Mono" font-size="12.5" fill="var(--muted)">green stalk, fungicide on</text>
+          </g>
+          <text class="cue" data-cue="10" x="50" y="442" font-family="IBM Plex Sans" font-size="19" fill="var(--amber)">Every paddock. Again after any frost, rain or heat event.</text>
+          <text class="cue" data-cue="11" x="50" y="482" font-family="IBM Plex Sans" font-size="19" fill="var(--stage-dim)">And in every crop: cut as high as you can without missing the low heads.</text>
+        </g>
+      </svg>
+
+      <!-- ================= SCENE E ================= -->
+      <svg class="scene" id="sc-e" viewBox="0 0 960 540" role="img" aria-label="The Sense Decide Act loop on the X9, the warning that nothing in it measures grain on the ground, and the three takeaways.">
+        <defs>
+          <marker id="we" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+          <marker id="wf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--amber)"/></marker>
+        </defs>
+        <g data-until="7">
+          <g class="cue" data-cue="1">
+            <text x="640" y="44" font-family="Archivo" font-size="13" font-weight="700" letter-spacing="2" fill="var(--muted)">ACT</text>
+            <g fill="#090E0B" stroke="var(--stage-line)" stroke-width="1.5">
+              <rect x="640" y="80" width="300" height="58" rx="8"/><rect x="640" y="154" width="300" height="58" rx="8"/>
+              <rect x="640" y="228" width="300" height="58" rx="8"/><rect x="640" y="302" width="300" height="58" rx="8"/>
+            </g>
+            <g font-family="Archivo" font-size="13" font-weight="700" fill="var(--amber)">
+              <text x="660" y="105">HARVEST SETTINGS AUTOMATION</text><text x="660" y="179">GROUND SPEED AUTOMATION</text>
+              <text x="660" y="253">ACTIVE TERRAIN ADJUSTMENT</text><text x="660" y="327">MACHINE SYNC</text>
+            </g>
+            <g font-family="IBM Plex Sans" font-size="13" fill="var(--stage-dim)">
+              <text x="660" y="125">concave, rotor, fan, chaffer, sieve</text><text x="660" y="199">forward speed / engine power target</text>
+              <text x="660" y="273">shoe offsets for slope</text><text x="660" y="347">cart position and speed</text>
+            </g>
+          </g>
+          <g class="cue" data-cue="2">
+            <text x="330" y="44" font-family="Archivo" font-size="13" font-weight="700" letter-spacing="2" fill="var(--muted)">DECIDE</text>
+            <rect x="330" y="150" width="230" height="116" rx="10" fill="#0E1712" stroke="var(--amber)" stroke-width="2.5" filter="url(#glow-filter)"/>
+            <text x="445" y="196" text-anchor="middle" font-family="Archivo" font-size="17" font-weight="700" fill="var(--amber)">Decision layer</text>
+            <text x="445" y="222" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" fill="var(--stage-dim)">compares what it senses</text>
+            <text x="445" y="240" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" fill="var(--stage-dim)">to YOUR target</text>
+          </g>
+          <g class="cue" data-cue="3">
+            <text x="20" y="44" font-family="Archivo" font-size="13" font-weight="700" letter-spacing="2" fill="var(--muted)">SENSE</text>
+            <g fill="#090E0B" stroke="var(--stage-line)" stroke-width="1.5">
+              <rect x="20" y="86" width="260" height="38" rx="6"/><rect x="20" y="134" width="260" height="38" rx="6"/>
+              <rect x="20" y="182" width="260" height="38" rx="6"/><rect x="20" y="230" width="260" height="38" rx="6"/>
+              <rect x="20" y="278" width="260" height="38" rx="6"/>
+            </g>
+            <g font-family="IBM Plex Sans" font-size="13.5" fill="var(--stage-dim)">
+              <text x="36" y="110">Shoe &amp; separator loss sensors</text><text x="36" y="158">ActiveVision grain cameras</text>
+              <text x="36" y="206">Rotor pressure &amp; engine load</text><text x="36" y="254">Mass flow &amp; moisture</text>
+              <text x="36" y="302">Slope, forward camera, satellite</text>
+            </g>
+          </g>
+          <g class="cue" data-cue="4">
+            <line x1="288" y1="208" x2="322" y2="208" stroke="currentColor" stroke-width="2.8" marker-end="url(#we)"/>
+            <line x1="568" y1="208" x2="632" y2="208" stroke="currentColor" stroke-width="2.8" marker-end="url(#we)"/>
+            <rect x="290" y="86" width="310" height="40" rx="7" fill="rgba(245,158,11,0.15)" stroke="var(--amber)"/>
+            <text x="445" y="111" text-anchor="middle" font-family="Archivo" font-size="13" font-weight="700" fill="var(--amber)">PERFORMANCE TARGET &mdash; YOU SET THIS</text>
+            <line x1="445" y1="126" x2="445" y2="142" stroke="var(--amber)" stroke-width="2.8" marker-end="url(#wf)"/>
+            <path d="M790 360 L790 388 Q790 396 782 396 L28 396 Q20 396 20 388 L20 324" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="6 5" stroke-opacity=".45" marker-end="url(#we)"/>
+            <text x="405" y="390" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" fill="var(--muted)">the loop closes on its own sensors</text>
+          </g>
+          <g class="cue" data-cue="5" data-until="6">
+            <rect x="20" y="420" width="920" height="64" rx="10" fill="rgba(245,158,11,0.15)" stroke="var(--amber)"/>
+            <text x="40" y="450" font-family="Archivo" font-size="17" font-weight="800" fill="var(--amber)">NOTHING IN THIS LOOP MEASURES GRAIN ON THE GROUND.</text>
+            <text x="40" y="472" font-family="IBM Plex Sans" font-size="14" fill="var(--stage-dim)">It cannot tell you the target you gave it was wrong.</text>
+          </g>
+          <g class="cue" data-cue="6">
+            <rect x="20" y="420" width="920" height="64" rx="10" fill="rgba(245,158,11,0.15)" stroke="var(--amber)"/>
+            <text x="40" y="450" font-family="Archivo" font-size="17" font-weight="800" fill="var(--amber)">BAD TARGET = BAD PERFORMANCE.</text>
+            <text x="40" y="472" font-family="IBM Plex Sans" font-size="14" fill="var(--stage-dim)">Deere&rsquo;s words, not mine. Optimise first, tray second, target third.</text>
+          </g>
+        </g>
+
+        <g>
+          <text class="cue" data-cue="7" x="60" y="80" font-family="Archivo" font-size="14" font-weight="700" letter-spacing="2.4" fill="var(--muted)">THREE THINGS TO TAKE INTO THE PADDOCK</text>
+          <g class="cue" data-cue="8">
+            <circle cx="82" cy="155" r="19" fill="var(--amber)" filter="url(#glow-filter)"/><text x="82" y="162" text-anchor="middle" font-family="IBM Plex Mono" font-size="18" font-weight="700" fill="#140C02">1</text>
+            <text x="124" y="150" font-family="Archivo" font-size="22" font-weight="700" fill="currentColor">Start at the header.</text>
+            <text x="124" y="178" font-family="IBM Plex Sans" font-size="16" fill="var(--stage-dim)">Front loss beat machine loss in most of your crops.</text>
+          </g>
+          <g class="cue" data-cue="9">
+            <circle cx="82" cy="255" r="19" fill="var(--amber)" filter="url(#glow-filter)"/><text x="82" y="262" text-anchor="middle" font-family="IBM Plex Mono" font-size="18" font-weight="700" fill="#140C02">2</text>
+            <text x="124" y="250" font-family="Archivo" font-size="22" font-weight="700" fill="currentColor">The tray is the only measurement.</text>
+            <text x="124" y="278" font-family="IBM Plex Sans" font-size="16" fill="var(--stage-dim)">Everything else in the combine is an inference.</text>
+          </g>
+          <g class="cue" data-cue="10">
+            <circle cx="82" cy="355" r="19" fill="var(--amber)" filter="url(#glow-filter)"/><text x="82" y="362" text-anchor="middle" font-family="IBM Plex Mono" font-size="18" font-weight="700" fill="#140C02">3</text>
+            <text x="124" y="350" font-family="Archivo" font-size="22" font-weight="700" fill="currentColor">Set the target after the tray.</text>
+            <text x="124" y="378" font-family="IBM Plex Sans" font-size="16" fill="var(--stage-dim)">Never before. And re-set it every paddock change.</text>
+          </g>
+          <text class="cue" data-cue="11" x="60" y="462" font-family="IBM Plex Sans" font-size="16" fill="var(--amber)">Every setting table, the service schedule and the cab cards are in the written brief.</text>
+        </g>
+      </svg>
+
+
+      <!-- ================= SCENE F ================= -->
+      <svg class="scene" id="sc-f" viewBox="0 0 960 540" aria-hidden="true"></svg>
+
+      <div class="poster" id="poster">
+        <h2>Harvest settings and the automation</h2>
+        <p>Narrated, with a speed control. It stops once so you can try the canola pod test.</p>
+        <ul class="objectives">
+          <li>Thresh with clearance and covers before rotor speed, and know why</li>
+          <li>Use the pod squeeze test to pick the right canola starting settings</li>
+          <li>Anchor the automation to a measured number instead of a guess</li>
+        </ul>
+        <button class="bigplay" id="bigplay" type="button"><span aria-hidden="true">&#9654;</span> Start the walkthrough</button>
+        <div class="meta" id="poster-meta">6 chapters</div>
+      </div>
+
+      <div class="stop" id="stop-money"></div>
+
+      <div class="stop" id="stop-loss"></div>
+
+      <div class="stop" id="stop-pod">
+        <div class="stop-in">
+          <h3>You just squeezed fifteen pods</h3>
+          <p>Pick what happened. The settings below are the X Series starting point for that condition.</p>
+          <div class="podrow">
+            <button type="button" data-pod="easy" aria-pressed="false"><b>Most broke open</b><span>Seed fell out readily. Pods dry and brittle.</span></button>
+            <button type="button" data-pod="mid" aria-pressed="false"><b>About half</b><span>Pods not crispy. Some resistance.</span></button>
+            <button type="button" data-pod="hard" aria-pressed="false"><b>Very few</b><span>Had to work at it. Stalks feel rubbery.</span></button>
+          </div>
+          <div id="pod-answer">Pick one to see the starting settings.</div>
+          <button class="resume" type="button" data-resume>Continue &rarr;</button>
+        </div>
+      </div>
+
+    </div><!-- /stage -->
+
+    <div class="caption" id="caption">Press start.</div>
+
+    <div class="transport">
+      <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Walkthrough position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="track"></div><div class="fill" id="fill"></div><div id="marks"></div><div class="knob" id="knob"></div>
+      </div>
+      <div class="ctrls">
+        <button type="button" id="playbtn" class="primary">&#9654; Play</button>
+        <button type="button" id="prevbtn" title="Previous chapter">&#9664;&#9664;</button>
+        <button type="button" id="nextbtn" title="Next chapter">&#9654;&#9654;</button>
+        <button type="button" id="soundbtn" aria-pressed="true" title="Click to mute (M)"><span id="soundicon" aria-hidden="true"></span><span id="soundlbl">Sound on</span></button>
+        <span class="speedgrp" id="speedgrp" role="group" aria-label="Playback speed">
+          <button type="button" data-r="0.85">0.85&times;</button>
+          <button type="button" data-r="1" aria-pressed="true">1&times;</button>
+          <button type="button" data-r="1.25">1.25&times;</button>
+          <button type="button" data-r="1.5">1.5&times;</button>
+          <button type="button" data-r="2">2&times;</button>
+        </span>
+        <span class="time" id="time">0:00 / 0:00</span>
+        <button type="button" id="testbtn" class="mini" title="Plays a short beep so you can check your speakers">Test sound</button>
+        <span class="audstat" id="audstat" role="status" aria-live="polite">Loading narration&hellip;</span>
+        <span class="spacer"></span>
+        <span class="now" id="now">Chapter 1</span>
+      </div>
+      <div class="ctrls voicerow">
+        <span class="vlabel">Voice</span>
+        <span class="voicegrp" id="voicegrp" role="group" aria-label="Narrator voice"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap notes">
+  <div class="notegrid">
+    <div class="note"><h4>Controls</h4><p>Space plays and pauses. Left and right arrows step a beat. M mutes and unmutes. Click or drag the bar to scrub &mdash; the picture redraws to match wherever you land. The speaker button shows what the sound is doing now: &ldquo;Sound on&rdquo; means you can hear it, &ldquo;Muted&rdquo; means it is playing silently.</p></div>
+    <div class="note"><h4>The voice and the speed</h4><p>The narration is a rendered audio track, not your browser talking &mdash; the same on every device, and it keeps working once the page has loaded even with no signal. Pick a voice under the player: two Australian, two American. Each loads the first time you choose it, and the page keeps your place when you switch. The speed buttons run it from 0.85&times; to 2&times; without changing the pitch, and both choices are remembered. At 1.5&times; the whole thing takes about two-thirds of the time shown.</p></div>
+    <div class="note"><h4>Where the detail lives</h4><p>This is the argument, not the manual. Settings tables, the service schedule and the symptom-to-action cards are in the written harvest brief.</p></div>
+  </div>
+  <p class="hint">Built from the John Deere X Series optimisation guide, the Ready-To-Harvest wheat and canola guides and the 2025 pre-harvest software release. The loss maths, the tray test and the machine-by-machine results are in the private full version.</p>
+</div>
+
+
+<script>
+(function(){
+"use strict";
+
+var CHAPTERS = [
+  {t:"Setting the machine", s:"d"},
+  {t:"The automation", s:"e"}
+];
+
+var BEATS = [
+{c:0,s:"d",q:0,t:"Now settings. The single most useful idea first."},
+{c:0,s:"d",q:1,t:"Two ways to thresh the same wheat. Thirteen hundred rpm with the concave clamped shut and no covers."},
+{c:0,s:"d",q:2,t:"Or a thousand rpm, a twelve millimetre concave, and three concave covers."},
+{c:0,s:"d",q:3,t:"Deere's own optimisation guide says these two thresh equally well."},
+{c:0,s:"d",q:4,t:"But the second one draws less rotor power, damages less straw, puts less chaff on the cleaning shoe, risks less grain damage, and gives you more throughput."},
+{c:0,s:"d",q:5,t:"So the rule. Thresh with concave covers and clearance before you thresh with rotor speed. Fast rotor plus tight concave is where the horsepower goes, and the fuel with it."},
+{c:0,s:"d",q:5,t:"In dry canola the same logic runs the other way for shoe load. Slowing the rotor does more than opening the concave, so slow the rotor before you open past thirty five millimetres."},
+{c:0,s:"d",q:6,t:"Canola is the crop that changes under you. Variety, moisture, time of day, whether it has rained since swathing. So there is a field test for it."},
+{c:0,s:"d",q:7,t:"Grab ten to fifteen full pods and give them one good squeeze. If most break open and release their seed, run open and gentle. Concave thirty and up, rotor low."},
+{c:0,s:"d",q:8,t:"If about half open and the pods are not crispy, run moderate. Concave around twenty, and expect to go harder once the dew sets in."},
+{c:0,s:"d",q:9,t:"If very few break open, run the most aggressive settings you have. Concave five to ten millimetres, rotor nine hundred. That is shatter-resistant canola, wet, green stalk, fungicide still holding the plant alive."},
+{c:0,s:"d",q:9,t:"Your turn. What happened when you squeezed them?",stop:"pod"},
+{c:0,s:"d",q:10,t:"Do that every paddock, and again after any frost, rain or heat event. Pod condition changes day to day, and it is the only input that tells you which settings table you should be on."},
+{c:0,s:"d",q:11,t:"And one that applies in every crop. Cut as high as you can without missing the low heads or pods. Straw you do not need costs power, fuel and separation, and in green conditions the wet material actively hinders separation."},
+{c:1,s:"e",q:0,t:"Last chapter. The automation, and the one thing that decides whether it helps you or holds you at a bad number all day."},
+{c:1,s:"e",q:1,t:"Four systems act on the machine. Harvest Settings Automation moves concave, rotor, fan, chaffer and sieve. Ground Speed Automation moves your forward speed. Active Terrain Adjustment handles slope. Machine Sync handles the cart."},
+{c:1,s:"e",q:2,t:"They all run off one decision layer, which compares what it senses to a target."},
+{c:1,s:"e",q:3,t:"And it senses plenty. Shoe and separator loss sensors, the grain cameras in the elevators, rotor pressure, engine load, mass flow, moisture, slope, the forward camera and satellite imagery."},
+{c:1,s:"e",q:4,t:"The performance target is the one place you enter that loop. Everything else is the machine talking to itself."},
+{c:1,s:"e",q:5,t:"Which brings us to the point of this whole walkthrough. Nothing in that loop measures grain on the ground. That is still true in Deere's twenty twenty seven announcements."},
+{c:1,s:"e",q:6,t:"Deere's own words are: bad target, bad performance. Set a target on a machine that is not optimised, and the automation will hold you at that level all day, very competently."},
+{c:1,s:"e",q:6,t:"So the order is: optimise the machine by hand, drop the tray, get a real number, and then press Set Performance Target. And re-set it whenever yield, moisture, variety or crop changes. It stores one target per crop, not one per season."},
+{c:1,s:"e",q:6,t:"Same goes for the in-cab loss bars. They are a change detector, not a measurement. When you press Set to Current, a full display means roughly twice whatever loss you had at that moment. Anchor them to a bad number and they will read comfortable while the tray says otherwise."},
+{c:1,s:"e",q:7,t:"Three things to take into the paddock."},
+{c:1,s:"e",q:8,t:"One. Drop a tray in the first hour of every crop change and every front change. Both bad numbers you have ever measured came from a changeover, and neither would have survived an hour."},
+{c:1,s:"e",q:9,t:"Two. The tray is the only actual measurement in the system. Everything else is an inference. And it has to be every machine, separately, because the two X9s do not converge on the same settings by themselves."},
+{c:1,s:"e",q:10,t:"Three. Set the target after the tray, never before. And if lupins go in next year, that is the one crop neither machine has ever been measured in, and the worst crop in the state survey. Measure the front first. Eleven of the twelve points were lost there."},
+{c:1,s:"e",q:11,t:"That is it. Every setting table, the service schedule and the symptom-to-action cards are in the written harvest brief. Good luck with it."}
+];
+
+/* ---------- voices: each is its own rendered track, with its own measured timing ---------- */
+var VOICES=[{"id":"william","label":"William","desc":"Australian man","file":"harvest-walkthrough-audio/voice-william.mp3","total":277.43,"cue":[[0.55,3.96],[4.96,6.312],[11.722,5.208],[17.38,3.96],[21.79,8.664],[30.904,10.224],[41.578,10.416],[52.444,9.408],[62.302,10.656],[73.408,8.04],[81.898,13.608],[95.956,3.384],[99.79,10.992],[111.232,13.92],[125.602,6.864],[132.916,15.72],[149.086,4.68],[154.216,12.264],[166.93,6.24],[173.62,9.216],[183.286,10.8],[194.536,15.264],[210.25,15.288],[225.988,2.376],[228.814,10.464],[239.728,13.008],[253.186,15.6],[269.236,7.848]]},{"id":"natasha","label":"Natasha","desc":"Australian woman","file":"harvest-walkthrough-audio/voice-natasha.mp3","total":329.73,"cue":[[0.55,5.208],[6.208,8.232],[14.89,5.88],[21.22,4.992],[26.662,10.32],[37.432,12.24],[50.122,12.432],[63.004,11.28],[74.734,12.48],[87.664,9.72],[97.834,15.72],[114.004,4.224],[118.678,12.264],[131.392,15.744],[147.586,8.664],[156.7,18.456],[175.606,5.544],[181.6,14.136],[196.186,7.776],[204.412,11.04],[215.902,12.408],[228.76,17.592],[246.802,19.056],[266.308,2.928],[269.686,13.08],[283.216,16.248],[299.914,18.792],[319.156,10.224]]},{"id":"andrew","label":"Andrew","desc":"American man","file":"harvest-walkthrough-audio/voice-andrew.mp3","total":297.91,"cue":[[0.55,3.888],[4.888,6.984],[12.322,6.168],[18.94,4.512],[23.902,9.864],[34.216,11.136],[45.802,12.048],[58.3,9.792],[68.542,11.808],[80.8,8.832],[90.082,15.216],[105.748,2.736],[108.934,12.552],[121.936,14.952],[137.338,6.936],[144.724,16.344],[161.518,4.776],[166.744,13.128],[180.322,7.032],[187.804,9.696],[197.95,11.52],[209.92,16.32],[226.69,16.824],[243.964,2.232],[246.646,11.448],[258.544,14.184],[273.178,15.936],[289.564,7.992]]},{"id":"ava","label":"Ava","desc":"American woman","file":"harvest-walkthrough-audio/voice-ava.mp3","total":294.33,"cue":[[0.55,3.984],[4.984,6.528],[11.962,5.496],[17.908,4.392],[22.75,10.08],[33.28,10.872],[44.602,10.704],[55.756,10.032],[66.238,12.024],[78.712,9.072],[88.234,13.896],[102.58,2.904],[105.934,11.928],[118.312,14.928],[133.69,7.392],[141.532,16.488],[158.47,5.112],[164.032,12.912],[177.394,6.6],[184.444,9.432],[194.326,11.568],[206.344,16.632],[223.426,16.704],[240.58,2.328],[243.358,11.496],[255.304,13.776],[269.53,15.552],[285.532,8.448]]}];
+var voiceId="william";
+try{ var sv0=localStorage.getItem("x9voice"); if(sv0 && VOICES.some(function(v){ return v.id===sv0; })) voiceId=sv0; }catch(e){}
+function voiceById(id){ for(var k=0;k<VOICES.length;k++){ if(VOICES[k].id===id) return VOICES[k]; } return VOICES[0]; }
+var CUE, total, starts=[], chapStart=[];
+function applyVoiceTiming(v){
+  CUE=v.cue; total=v.total; starts.length=0; chapStart.length=0;
+  BEATS.forEach(function(b,i){ b.st=CUE[i][0]; b.dur=CUE[i][1]; starts.push(b.st); });
+  CHAPTERS.forEach(function(_,ci){
+    for(var i=0;i<BEATS.length;i++){ if(BEATS[i].c===ci){ chapStart.push(starts[i]); break; } }
+  });
+}
+applyVoiceTiming(voiceById(voiceId));
+
+/* ---------------- elements ---------------- */
+var stage=document.getElementById("stage"), caption=document.getElementById("caption");
+var scenes={a:document.getElementById("sc-a"),b:document.getElementById("sc-b"),c:document.getElementById("sc-c"),d:document.getElementById("sc-d"),f:document.getElementById("sc-f"),e:document.getElementById("sc-e")};
+var poster=document.getElementById("poster"), bigplay=document.getElementById("bigplay");
+var playbtn=document.getElementById("playbtn"), prevbtn=document.getElementById("prevbtn"), nextbtn=document.getElementById("nextbtn");
+var soundbtn=document.getElementById("soundbtn"), timeEl=document.getElementById("time"), nowEl=document.getElementById("now");
+var scrub=document.getElementById("scrub"), fill=document.getElementById("fill"), knob=document.getElementById("knob"), marks=document.getElementById("marks");
+var rail=document.getElementById("rail");
+var stops={money:document.getElementById("stop-money"),loss:document.getElementById("stop-loss"),pod:document.getElementById("stop-pod")};
+
+var t=0, playing=false, cur=-1, sound=true, started=false, consumed={}, last=0, countTimer=null, moneyDone=false;
+var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------------- seed dots ---------------- */
+(function seedDots(){
+  var seed=7;
+  function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+  function place(id,n,r,x0,y0,size){
+    var g=document.getElementById(id); if(!g) return;
+    var pad=r+10, span=size-pad*2, out="";
+    var cols=Math.ceil(Math.sqrt(n)), rows=Math.ceil(n/cols), k=0;
+    for(var row=0;row<rows;row++){
+      for(var col=0;col<cols && k<n;col++,k++){
+        var cx=x0+pad+(span*(col+0.5)/cols)+(rnd()-0.5)*(span/cols)*0.5;
+        var cy=y0+pad+(span*(row+0.5)/rows)+(rnd()-0.5)*(span/rows)*0.5;
+        out+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+r+'"/>';
+      }
+    }
+    g.innerHTML=out;
+  }
+  place("dots-wheat",15,5.5,60,130,200);
+  place("dots-canola",87,2.4,380,130,200);
+})();
+
+/* ---------------- rail ---------------- */
+CHAPTERS.forEach(function(ch,i){
+  var b=document.createElement("button");
+  b.type="button"; b.innerHTML='<span class="n">'+(i+1)+'</span>'+ch.t;
+  b.addEventListener("click", function(){ seek(chapStart[i]); if(!started) start(); });
+  rail.appendChild(b);
+});
+function paintRail(ci){
+  var bs=rail.querySelectorAll("button");
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute("aria-current", i===ci ? "true":"false");
+}
+
+/* ---------------- scrub marks ---------------- */
+function paintMarks(){
+  marks.innerHTML="";
+  chapStart.forEach(function(s,i){
+    if(i===0) return;
+    var d=document.createElement("div"); d.className="mark"; d.style.left=(s/total*100)+"%"; marks.appendChild(d);
+  });
+}
+paintMarks();
+
+/* ---------------- rendering ---------------- */
+function showScene(key){
+  for(var k in scenes){ scenes[k].classList.toggle("live", k===key); }
+}
+function applyCues(svg, level){
+  var els = svg.querySelectorAll("[data-cue],[data-until]");
+  for(var i=0;i<els.length;i++){
+    var el=els[i];
+    var cue=el.getAttribute("data-cue"), until=el.getAttribute("data-until");
+    if(cue!==null) el.classList.toggle("on", level >= parseInt(cue,10));
+    if(until!==null) el.classList.toggle("off", level >= parseInt(until,10));
+  }
+}
+function indexAt(time){
+  var i=0;
+  for(var k=0;k<BEATS.length;k++){ if(starts[k] <= time+1e-6) i=k; else break; }
+  return i;
+}
+function fmt(s){ s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2); }
+
+function countUp(target){
+  if(countTimer){ clearInterval(countTimer); countTimer=null; }
+  var el=document.getElementById("a-money"); if(!el) return;
+  if(reduced){ el.textContent=""; return; }
+  var v=0, step=target/34;
+  countTimer=setInterval(function(){
+    v+=step;
+    if(v>=target){ v=target; clearInterval(countTimer); countTimer=null; }
+    el.textContent="$"+(Math.round(v/1000)*1000).toLocaleString("en-AU");
+  },28);
+}
+
+function render(i, opts){
+  opts=opts||{};
+  var b=BEATS[i];
+  showScene(b.s);
+  applyCues(scenes[b.s], b.q);
+  if(b.s!=="a"){ var m=document.getElementById("a-money"); if(m) m.textContent=""; }
+  caption.textContent=b.t;
+  paintRail(b.c);
+  nowEl.textContent="Ch "+(b.c+1)+" · "+CHAPTERS[b.c].t;
+  if(b.s==="a" && b.q<8){ moneyDone=false; }
+  if(b.s==="a" && b.q===8 && opts.fresh && !moneyDone){ moneyDone=true; countUp(199000); }
+}
+
+/* ---------------- narration track ---------------- */
+/* ---------------- narration engine (Web Audio) ----------------
+   The narration is decoded once into memory and played through Web Audio. That works everywhere, including inside
+   viewers whose built-in audio player does not (that is why the first version was silent there). Speed uses a
+   WSOLA time-stretch, so 1.5x is faster but not higher in pitch. */
+/* WSOLA time-stretcher: changes speed without changing pitch. Pure JS, no Web Audio dependency. */
+function makeStretcher(x, sr){
+  var L=x.length;
+  var N=Math.round(sr*0.0427);            /* frame ~43 ms  */
+  N=(N>>1)<<1; var H=N>>1;                 /* hop = half frame */
+  var D=Math.round(sr*0.0107);             /* search +-10.7 ms */
+  var win=new Float32Array(N);
+  for(var i=0;i<N;i++) win[i]=0.5-0.5*Math.cos(2*Math.PI*i/N);
+  var tail=new Float32Array(H), have=false, prevS=0, inPos=0;
+  var ref=new Float32Array(H);
+  var FADE=Math.round(sr*0.006);
+  function reset(posSamples){ inPos=posSamples; have=false; }
+  function pos(){ return inPos; }
+  /* produce one hop (H samples) into out[o..o+H) for stretch factor `rate` (input advance = H*rate) */
+  function hop(out,o,rate){
+    var s,i,k;
+    if(!have){
+      s=Math.round(inPos); if(s<0) s=0;
+      for(i=0;i<H;i++){ var v=(s+i<L)?x[s+i]:0; out[o+i]=(i<FADE)? v*(i/FADE) : v; }
+      for(i=0;i<H;i++){ tail[i]=((s+H+i<L)?x[s+H+i]:0)*win[H+i]; }
+      prevS=s; have=true; inPos+=H*rate; return;
+    }
+    /* natural continuation of the previous frame */
+    var rs=prevS+H;
+    for(i=0;i<H;i++) ref[i]=(rs+i<L)?x[rs+i]:0;
+    var c=Math.round(inPos), best=c, bestV=-1e30;
+    var lo=c-D, hi=c+D; if(lo<0) lo=0; if(hi>L-N) hi=L-N; if(lo>hi){ lo=hi=Math.max(0,Math.min(c,L-1)); }
+    for(var cand=lo; cand<=hi; cand++){
+      var dot=0, en=1e-9;
+      for(k=0;k<H;k+=2){ var a=x[cand+k]; dot+=a*ref[k]; en+=a*a; }
+      var v2=dot/Math.sqrt(en);
+      if(v2>bestV){ bestV=v2; best=cand; }
+    }
+    s=best;
+    for(i=0;i<H;i++){
+      var a2=(s+i<L)?x[s+i]:0;
+      out[o+i]=tail[i]+a2*win[i];
+    }
+    for(i=0;i<H;i++){ tail[i]=((s+H+i<L)?x[s+H+i]:0)*win[H+i]; }
+    prevS=s; inPos+=H*rate;
+  }
+  function plain(out,o,n){
+    var s=Math.round(inPos), i;
+    for(i=0;i<n;i++) out[o+i]=(s+i<L && s+i>=0)? x[s+i] : 0;
+    inPos+=n; have=false;
+  }
+  /* fill n samples (n must be a multiple of H when rate != 1) */
+  function fill(out,o,n,rate){
+    if(Math.abs(rate-1)<0.001){ plain(out,o,n); return; }
+    for(var d=0; d<n; d+=H) hop(out,o+d,rate);
+  }
+  return {fill:fill, reset:reset, pos:pos, hopSize:H, frame:N};
+}
+
+
+var audioFail=false, speed=1, waiting=false, waitTimer=null, lastProg=0, dbg=[];
+var audstat=document.getElementById("audstat");
+function setStat(txt, bad){ audstat.textContent=txt; audstat.className="audstat"+(bad?" bad":""); }
+function fmtMB(n){ return (n/1048576).toFixed(1); }
+function fetchFile(url, onProg){
+  return fetch(url).then(function(r){
+    if(!r.ok) throw new Error("http "+r.status);
+    var total=+r.headers.get("content-length")||0;
+    if(!r.body || !r.body.getReader) return r.blob();
+    var rd=r.body.getReader(), chunks=[], got=0;
+    function pump(){
+      return rd.read().then(function(x){
+        if(x.done) return new Blob(chunks,{type:"audio/mpeg"});
+        chunks.push(x.value); got+=x.value.length; onProg(got,total);
+        return pump();
+      });
+    }
+    return pump();
+  });
+}
+var Eng=(function(){
+  var ctx=null, node=null, gain=null, st=null, sr=24000, B=4096;
+  var ready=false, running=false, rate=1, muted=false, pausedT=0, dur=0;
+  var syncSrc=0, syncPb=0, headSrc=0, fifo=null, fl=0, fading=false, endedFlag=false, onReady=null;
+  function ensureCtx(){
+    if(ctx) return true;
+    var C=window.AudioContext||window.webkitAudioContext; if(!C) return false;
+    try{ ctx=new C({sampleRate:24000}); }catch(e){ try{ ctx=new C(); }catch(e2){ return false; } }
+    gain=ctx.createGain(); gain.gain.value=muted?0:1; gain.connect(ctx.destination);
+    return true;
+  }
+  function flush(){ fl=0; fading=false; }
+  function proc(e){
+    var out=e.outputBuffer.getChannelData(0), n=out.length, i;
+    if(!ready || (!running && !fading)){ for(i=0;i<n;i++) out[i]=0; return; }
+    var H=st.hopSize;
+    if(!fifo || fifo.length<n+2*H) fifo=new Float32Array(n+2*H);
+    if(fl===0){ syncSrc=headSrc/sr; syncPb=e.playbackTime; }
+    else { syncSrc=headSrc/sr; syncPb=e.playbackTime; }
+    while(fl<n){ st.fill(fifo,fl,H,rate); fl+=H; }
+    for(i=0;i<n;i++) out[i]=fifo[i];
+    if(fading){
+      var m=Math.min(n,Math.round(sr*0.02));
+      for(i=0;i<m;i++) out[i]*=1-i/m;
+      for(i=m;i<n;i++) out[i]=0;
+      fading=false; flush(); return;
+    }
+    for(i=n;i<fl;i++) fifo[i-n]=fifo[i];
+    fl-=n; headSrc+=n*rate;
+    if(headSrc>=dur*sr-1 && !endedFlag){ endedFlag=true; running=false; pausedT=dur; }
+  }
+  function build(buf){
+    sr=buf.sampleRate; dur=buf.duration;
+    st=makeStretcher(buf.getChannelData(0), sr);
+    node=ctx.createScriptProcessor(B,1,1);
+    node.onaudioprocess=proc;
+    node.connect(gain);
+    ready=true;
+  }
+  return {
+    get ready(){ return ready; },
+    get running(){ return running; },
+    get ended(){ return endedFlag; },
+    available: function(){ return ensureCtx() && !!ctx.createScriptProcessor; },
+    unlock: function(){ if(ctx && ctx.state!=="running"){ try{ ctx.resume(); }catch(e){} } },
+    load: function(arrayBuffer){
+      return new Promise(function(res, rej){
+        if(!ensureCtx()) return rej(new Error("no Web Audio"));
+        var done=false;
+        function ok(buf){ if(done) return; done=true; try{ build(buf); res(); }catch(err){ rej(err); } }
+        function bad(err){ if(done) return; done=true; rej(err||new Error("decode failed")); }
+        try{ var p=ctx.decodeAudioData(arrayBuffer, ok, bad); if(p && p.then) p.then(ok, bad); }catch(err){ bad(err); }
+      });
+    },
+    play: function(t0, r, m){
+      if(!ready) return;
+      rate=r; muted=m; gain.gain.value=m?0:1;
+      endedFlag=false; flush(); st.reset(t0*sr); headSrc=t0*sr;
+      syncSrc=t0; syncPb=ctx.currentTime; pausedT=t0; running=true;
+      this.unlock();
+    },
+    pause: function(){
+      if(!ready) return;
+      if(running){ pausedT=this.time(); running=false; fading=true; }
+    },
+    seek: function(t0){
+      pausedT=t0;
+      if(!ready) return;
+      flush(); st.reset(t0*sr); headSrc=t0*sr; syncSrc=t0; syncPb=ctx.currentTime; endedFlag=false;
+    },
+    setRate: function(r){
+      if(!ready){ rate=r; return; }
+      var tn=this.time(); rate=r;
+      flush(); st.reset(tn*sr); headSrc=tn*sr; syncSrc=tn; syncPb=ctx.currentTime;
+    },
+    setMuted: function(m){
+      muted=m;
+      if(gain){ try{ gain.gain.setTargetAtTime(m?0:1, ctx.currentTime, 0.015); }catch(e){ gain.gain.value=m?0:1; } }
+    },
+    time: function(){
+      if(!ready||!running) return pausedT;
+      var span=B/sr*rate;
+      var v=syncSrc+(ctx.currentTime-syncPb)*rate;
+      if(v<syncSrc-span-0.25) v=syncSrc-span-0.25;
+      if(v>syncSrc+span+0.1) v=syncSrc+span+0.1;
+      return Math.max(0,v);
+    },
+    duration: function(){ return dur; },
+    unload: function(){
+      running=false; fading=false; ready=false; endedFlag=false; fl=0; dur=0; fifo=null; st=null;
+      if(node){ try{ node.onaudioprocess=null; node.disconnect(); }catch(e){} node=null; }
+    }
+  };
+})();
+
+function giveUpOnAudio(){
+  if(audioFail) return;
+  audioFail=true;
+  setStat("Narration is not available yet ("+dbg.join("; ")+"). Captions only for now", true);
+  if(waiting){ waiting=false; clearInterval(waitTimer); setPlaying(true); }
+}
+function narrationReady(){
+  lastProg=Date.now();
+  if(audioFail){ audioFail=false; if(playing){ Eng.play(t, speed, !sound); setStat(sound ? "Narration playing" : "Muted. Press Sound to hear it", !sound); return; } }
+  if(waiting){ setPlaying(true); }
+  else if(!playing){ setStat(sound ? "Narration ready" : "Narration ready (muted)"); }
+}
+var loadToken=0, STALE={stale:true};
+function loadNarration(){
+  if(!Eng.available()){ dbg.push("this browser has no Web Audio"); giveUpOnAudio(); return; }
+  var v=voiceById(voiceId), tk=++loadToken;
+  lastProg=Date.now();
+  var el=document.getElementById("narration-src-"+v.id), raw=el ? el.textContent.trim() : "", getBytes;
+  if(raw.indexOf("data:")===0){
+    setStat("Preparing "+v.label+"\u2019s voice\u2026");
+    getBytes=new Promise(function(res){
+      var bin=atob(raw.slice(raw.indexOf(",")+1)), n=bin.length, u8=new Uint8Array(n);
+      for(var k=0;k<n;k++) u8[k]=bin.charCodeAt(k);
+      res(u8.buffer);
+    });
+  } else {
+    setStat("Downloading "+v.label+"\u2019s voice\u2026");
+    getBytes=fetchFile(v.file, function(got,total){
+      if(tk!==loadToken) return;
+      lastProg=Date.now();
+      setStat("Downloading "+v.label+"\u2019s voice "+fmtMB(got)+(total ? " of "+fmtMB(total) : "")+" MB");
+    }).then(function(blob){ return blob.arrayBuffer ? blob.arrayBuffer() : new Response(blob).arrayBuffer(); });
+  }
+  getBytes.then(function(ab){
+    if(tk!==loadToken) throw STALE;
+    lastProg=Date.now(); setStat("Preparing narration\u2026");
+    return Eng.load(ab);
+  }).then(function(){
+    if(tk!==loadToken) { Eng.unload(); throw STALE; }
+    narrationReady();
+  }).catch(function(err){
+    if(err===STALE) return;
+    dbg.push(((err&&err.message)||String(err)));
+    giveUpOnAudio();
+  });
+}
+try{ var sv=parseFloat(localStorage.getItem("x9speed")); if(sv>=0.5&&sv<=3) speed=sv; }catch(e){}
+Eng.setRate(speed);
+loadNarration();
+
+
+var speedgrp=document.getElementById("speedgrp");
+function paintSpeed(){
+  var bs=speedgrp.querySelectorAll("button");
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute("aria-pressed", parseFloat(bs[i].dataset.r)===speed ? "true":"false");
+}
+paintSpeed();
+speedgrp.addEventListener("click", function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  speed=parseFloat(b.dataset.r);
+  Eng.setRate(speed);
+  try{ localStorage.setItem("x9speed", String(speed)); }catch(err){}
+  paintSpeed();
+});
+function hush(){ try{ Eng.pause(); }catch(e){} }
+
+/* ---------------- voice picker ---------------- */
+var voicegrp=document.getElementById("voicegrp");
+VOICES.forEach(function(v){
+  var b=document.createElement("button");
+  b.type="button"; b.dataset.v=v.id;
+  b.innerHTML=v.label+"<small>"+v.desc+"</small>";
+  voicegrp.appendChild(b);
+});
+function paintVoice(){
+  var bs=voicegrp.querySelectorAll("button");
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute("aria-pressed", bs[i].dataset.v===voiceId ? "true":"false");
+}
+function paintMeta(){
+  document.getElementById("poster-meta").textContent=CHAPTERS.length+" chapters \u00b7 "+fmt(total)+" at 1\u00d7 \u00b7 1 interactive stop";
+}
+function switchVoice(id){
+  if(id===voiceId) return;
+  var was=started && (playing || waiting);
+  /* keep the same place in the script: the same line, the same fraction of the way through it */
+  var i=indexAt(t), b=BEATS[i], frac=b.dur>0 ? Math.max(0,Math.min(1,(t-b.st)/b.dur)) : 0;
+  if(playing) setPlaying(false);
+  waiting=false; clearInterval(waitTimer);
+  voiceId=id;
+  try{ localStorage.setItem("x9voice", id); }catch(e){}
+  applyVoiceTiming(voiceById(id));
+  t=Math.min(total-0.05, BEATS[i].st+frac*BEATS[i].dur);
+  paintMarks(); paintMeta(); paintVoice();
+  Eng.unload(); audioFail=false; dbg.length=0;
+  Eng.seek(t); paint();
+  loadNarration();
+  if(was) setPlaying(true);
+}
+voicegrp.addEventListener("click", function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  switchVoice(b.dataset.v);
+});
+paintVoice();
+
+function enter(i, fresh){
+  cur=i;
+  render(i, {fresh:fresh});
+}
+/* A stop waits until its line has finished speaking, then holds. */
+function checkStop(){
+  var b=BEATS[cur]; if(!b || !b.stop || consumed[b.stop] || !playing) return;
+  if(t < b.st + b.dur - 0.08) return;
+  consumed[b.stop]=true;
+  playing=false;
+  playbtn.innerHTML="&#9654; Play";
+  hush();
+  var el=stops[b.stop]; if(el) el.classList.add("live");
+}
+
+function setPlaying(p){
+  if(p) Eng.unlock();
+  if(p && !audioFail && !Eng.ready){
+    /* The voice has not finished loading yet: say so, and start the moment it has. */
+    waiting=true; playing=false;
+    playbtn.innerHTML="Loading voice&hellip;";
+    clearInterval(waitTimer);
+    waitTimer=setInterval(function(){ if(!waiting){ clearInterval(waitTimer); return; } if(Date.now()-lastProg>30000) giveUpOnAudio(); }, 2000);
+    return;
+  }
+  waiting=false; clearInterval(waitTimer);
+  playing=p;
+  playbtn.innerHTML = p ? "&#10073;&#10073; Pause" : "&#9654; Play";
+  if(p){
+    if(audioFail) return;
+    Eng.play(t, speed, !sound);
+    setStat(sound ? "Narration playing" : "Muted. Press Sound to hear it", !sound);
+  } else { hush(); if(!audioFail && Eng.ready) setStat(sound ? "Paused" : "Paused (muted)"); }
+}
+function start(){
+  started=true; poster.style.display="none";
+  setPlaying(true);
+  enter(indexAt(t), true);
+  last=performance.now();
+}
+function seek(time){
+  t=Math.max(0, Math.min(total-0.05, time));
+  var i=indexAt(t);
+  render(i,{});
+  cur=i;
+  Eng.seek(t);
+  paint();
+}
+function paint(){
+  var pct=(t/total)*100;
+  fill.style.width=pct+"%"; knob.style.left=pct+"%";
+  timeEl.textContent=fmt(t)+" / "+fmt(total);
+  scrub.setAttribute("aria-valuenow", Math.round(pct));
+}
+
+function loop(now){
+  var dt=(now-last)/1000; last=now;
+  if(playing){
+    if(!audioFail && Eng.ready) t=Eng.time();
+    else if(audioFail) t+=Math.min(dt,0.25)*speed;
+    if(t>=total-0.02){ t=total-0.02; setPlaying(false); }
+    var i=indexAt(t);
+    if(i!==cur) enter(i, true);
+    checkStop();
+    paint();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(function(n){ last=n; requestAnimationFrame(loop); });
+
+/* ---------------- controls ---------------- */
+bigplay.addEventListener("click", start);
+playbtn.addEventListener("click", function(){
+  if(!started){ start(); return; }
+  setPlaying(!playing);
+});
+prevbtn.addEventListener("click", function(){
+  var ci=BEATS[cur].c;
+  var target = (t - chapStart[ci] > 2.5 || ci===0) ? chapStart[ci] : chapStart[ci-1];
+  seek(target); if(!started) start();
+});
+nextbtn.addEventListener("click", function(){
+  var ci=BEATS[cur].c;
+  if(ci < CHAPTERS.length-1) seek(chapStart[ci+1]); else seek(total-0.05);
+  if(!started) start();
+});
+var ICON_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+var ICON_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/></svg>';
+function paintSound(){
+  soundbtn.setAttribute("aria-pressed", sound ? "true" : "false");
+  soundbtn.title = sound ? "Click to mute (M)" : "Click to unmute (M)";
+  soundbtn.classList.toggle("muted", !sound);
+  document.getElementById("soundlbl").textContent = sound ? "Sound on" : "Muted";
+  document.getElementById("soundicon").innerHTML = sound ? ICON_ON : ICON_OFF;
+}
+function toggleSound(){
+  sound=!sound; Eng.setMuted(!sound); paintSound();
+  if(playing && !audioFail) setStat(sound ? "Narration playing" : "Muted. Press Sound to hear it", !sound);
+}
+soundbtn.addEventListener("click", toggleSound);
+paintSound();
+document.getElementById("testbtn").addEventListener("click", function(){
+  try{
+    var C=window.AudioContext||window.webkitAudioContext, c=new C(), o=c.createOscillator(), g=c.createGain();
+    o.type="sine"; o.frequency.value=660; g.gain.value=0.12; o.connect(g); g.connect(c.destination);
+    o.start(); o.frequency.setValueAtTime(880, c.currentTime+0.2); o.stop(c.currentTime+0.5);
+    setStat("Test beep played. If you did not hear it, check your computer volume and output device", false);
+  }catch(e){ setStat("This page cannot play a test beep", true); }
+});
+function scrubTo(e){
+  var r=scrub.getBoundingClientRect();
+  var x=(e.touches? e.touches[0].clientX : e.clientX)-r.left;
+  seek(Math.max(0,Math.min(1,x/r.width))*total);
+}
+var dragging=false;
+scrub.addEventListener("pointerdown", function(e){ dragging=true; scrub.setPointerCapture(e.pointerId); scrubTo(e); });
+scrub.addEventListener("pointermove", function(e){ if(dragging) scrubTo(e); });
+scrub.addEventListener("pointerup", function(e){ dragging=false; try{scrub.releasePointerCapture(e.pointerId);}catch(err){} });
+scrub.addEventListener("keydown", function(e){
+  if(e.key==="ArrowRight"){ e.preventDefault(); seek(t+10); }
+  if(e.key==="ArrowLeft"){ e.preventDefault(); seek(t-10); }
+});
+
+document.addEventListener("keydown", function(e){
+  var tag=(e.target && e.target.tagName)||"";
+  if(tag==="INPUT"||tag==="SELECT"||tag==="TEXTAREA") return;
+  if(e.key===" "){ e.preventDefault(); if(!started){ start(); } else { setPlaying(!playing); } }
+  if(e.key==="m"||e.key==="M"){ toggleSound(); }
+  if(e.key==="ArrowRight"){ e.preventDefault(); seek(starts[Math.min(BEATS.length-1,cur+1)]); }
+  if(e.key==="ArrowLeft"){ e.preventDefault(); seek(starts[Math.max(0,cur-1)]); }
+});
+
+var resumes=document.querySelectorAll("[data-resume]");
+for(var r=0;r<resumes.length;r++){
+  resumes[r].addEventListener("click", function(){
+    for(var k in stops){ stops[k].classList.remove("live"); }
+    var nxt=Math.min(BEATS.length-1, cur+1);
+    t=starts[nxt];
+    setPlaying(true);
+    enter(nxt, true);
+    paint();
+  });
+}
+
+/* ---------------- stop: pod ---------------- */
+var POD={
+  easy:"EASY THRESH \u2014 open and gentle\n\nConcave           30\u201335 mm\nRotor             500\u2013550 rpm\nFan               650\u2013750 rpm\nChaffer           14 mm   |   Sieve  5 mm\nActive tailings   Corn (open) \u2014 gentle on brittle pods\n\nSeed that shatters in the wind needs no help from the rotor.",
+  mid:"MODERATE \u2014 middle of the range\n\nConcave           20\u201325 mm\nRotor             550\u2013650 rpm\nFan               650\u2013750 rpm\nChaffer           14 mm   |   Sieve  5 mm\n\nExpect to go more aggressive once the dew sets in.",
+  hard:"HARD THRESH \u2014 the most aggressive you have\n\nConcave           5\u201310 mm  (10\u201320 mm typical)\nRotor             750\u2013900 rpm\nFan               650\u2013750 rpm\nChaffer           14 mm   |   Sieve  5 mm\nActive tailings   Small grains (closed) \u2014 needs re-threshing\nAuto Maintain     set crop type to WET canola\n\nShatter-resistant, high moisture, green rubbery stalk,\nfungicide still holding the plant alive."
+};
+
+var podBtns=document.querySelectorAll("[data-pod]");
+for(var pb=0;pb<podBtns.length;pb++){
+  podBtns[pb].addEventListener("click", function(){
+    for(var i=0;i<podBtns.length;i++) podBtns[i].setAttribute("aria-pressed","false");
+    this.setAttribute("aria-pressed","true");
+    var el=document.getElementById("pod-answer");
+    el.textContent=POD[this.getAttribute("data-pod")];
+    el.style.whiteSpace="pre-wrap";
+  });
+}
+
+/* ---------------- boot ---------------- */
+cur=0;
+render(0,{});
+paint();
+paintMeta();
+})();
+</script>
+
+</body>
+</html>
